@@ -10,8 +10,8 @@
 | Smart Contract | Solidity 
 | Wallet Abstraction | Web3Auth Flutter SDK | Email/Google login, no seed phrases |
 | Blockchain SDK | web3dart (Flutter package) | Talks to Shardeum RPC |
-| On-Ramp | Transak API | USD → SHM via WebView widget |
-| Off-Ramp | OnMeta API | SHM → INR to bank/UPI |
+| On-Ramp | Transak API | USD → USDC via WebView widget |
+| Off-Ramp | OnMeta API | USDC → INR to bank/UPI |
 | DEX / Liquidity | Shardeum native AMM DEX | No own liquidity pool — use DEX |
 | Database | Neon (Serverless Postgres) | Transaction history, user profiles |
 
@@ -21,12 +21,12 @@
 
 ```
 Step 1 — User A opens app, enters amount ($1000) and receiver details
-Step 2 — App shows live preview: SHM equivalent, INR receiver gets, fee breakdown
+Step 2 — App shows live preview: USDC equivalent, INR receiver gets, fee breakdown
 Step 3 — User A confirms → Transak WebView opens inside app
-Step 4 — Transak converts USD → SHM, deposits to User A's Web3Auth wallet on Shardeum
-Step 5 — RemitFlow smart contract receives SHM from User A wallet
-Step 6 — Smart contract routes SHM through Shardeum DEX to User B wallet
-Step 7 — OnMeta detects SHM in User B wallet, converts SHM → INR
+Step 4 — Transak converts USD → USDC, deposits to User A's Web3Auth wallet on Shardeum
+Step 5 — RemitFlow smart contract receives USDC from User A wallet
+Step 6 — Smart contract routes USDC through Shardeum DEX to User B wallet
+Step 7 — OnMeta detects USDC in User B wallet, converts USDC → INR
 Step 8 — INR credited to User B's bank account or UPI (instant via UPI)
 Step 9 — Both users get push notification. Tx hash visible on Shardeum Explorer.
 ```
@@ -36,18 +36,18 @@ Step 9 — Both users get push notification. Tx hash visible on Shardeum Explore
 ## 4. Smart Contract Specification
 
 ### What It Does
-- Receives SHM from sender's Web3Auth wallet
+- Receives USDC from sender's Web3Auth wallet
 - Routes through Shardeum DEX AMM
-- Transfers SHM to receiver's Web3Auth wallet
+- Transfers USDC to receiver's Web3Auth wallet
 - Emits a `Transfer` event (sender, receiver, amount, timestamp)
 - Reverts if sender balance is insufficient
 - Non-custodial: never holds funds beyond execution
 
 ### Deployment
 - Written in Solidity 0.8.x
-- Deployed directly in Remix IDE (no Hardhat, no Foundry)
+- Deployed via Foundry (Forge)
 - Network: Shardeum Sphinx Testnet
-- Remix connects to Shardeum RPC via MetaMask injection
+- Foundry uses Shardeum RPC for deployment scripts and verification
 - ABI and contract address stored in Neon DB, referenced in Flutter app
 
 ### Events to Emit
@@ -55,7 +55,7 @@ Step 9 — Both users get push notification. Tx hash visible on Shardeum Explore
 event Transfer(
     address indexed sender,
     address indexed receiver,
-    uint256 shmAmount,
+    uint256 usdcAmount,
     uint256 timestamp
 );
 ```
@@ -86,7 +86,7 @@ Build the following screens in order:
 ### Screen 4: Home Dashboard
 - Top: User's display name + country flag
 - Middle: "Send Money" primary button (large, prominent)
-- Below: Live SHM/USD and SHM/INR exchange rate ticker
+- Below: Live USDC/USD and USDC/INR exchange rate ticker
 - Bottom: Recent transactions list (last 5)
 
 ### Screen 5: Send Money
@@ -104,12 +104,12 @@ Build the following screens in order:
 ### Screen 6: On-Ramp WebView (Transak)
 - Opens as a bottom sheet or full screen
 - Embeds Transak widget via `webview_flutter`
-- Pre-filled: USD amount, SHM as target crypto, Shardeum network, User A wallet address
+- Pre-filled: USD amount, USDC as target crypto, Shardeum network, User A wallet address
 - On completion: WebView dismisses, app moves to Transfer Progress screen
 
 ### Screen 7: Transfer Progress
 - Real-time status tracker with 4 steps:
-  1. On-Ramp — SHM purchased (check mark when Transak confirms)
+  1. On-Ramp — USDC purchased (check mark when Transak confirms)
   2. On-Chain Settlement — smart contract routing (check mark when tx confirmed on Shardeum)
   3. Off-Ramp — INR conversion in progress (check mark when OnMeta confirms)
   4. Credited — INR in User B's account
@@ -119,7 +119,7 @@ Build the following screens in order:
 ### Screen 8: Transaction Detail
 - Full transfer summary:
   - USD sent
-  - SHM settled
+  - USDC settled
   - INR received
   - Total fees
   - Timestamp
@@ -151,7 +151,7 @@ Build the following screens in order:
 - Config params to pass:
   - `apiKey`: your Transak API key
   - `network`: `shardeum`
-  - `cryptoCurrencyCode`: `SHM`
+  - `cryptoCurrencyCode`: `USDC`
   - `walletAddress`: User A's Web3Auth wallet address
   - `fiatAmount`: amount user entered
   - `fiatCurrency`: `USD`
@@ -162,7 +162,7 @@ Build the following screens in order:
 - Integration: REST API called from Flutter/backend when smart contract Transfer event fires
 - Trigger: listen for Transfer event on Shardeum using `web3dart` event subscription
 - API call: POST to OnMeta off-ramp endpoint with:
-  - SHM amount received
+  - USDC amount received
   - User B's bank account or UPI handle
   - Target currency: INR
 - OnMeta handles conversion and bank credit
@@ -195,7 +195,7 @@ id              UUID PRIMARY KEY DEFAULT gen_random_uuid()
 sender_id       UUID REFERENCES users(id)
 receiver_id     UUID REFERENCES users(id)
 amount_usd      NUMERIC(12,2)         -- USD amount User A sent
-amount_shm      NUMERIC(18,8)         -- SHM amount on-chain
+amount_usdc     NUMERIC(18,8)         -- USDC amount on-chain
 amount_inr      NUMERIC(12,2)         -- INR amount User B received
 fee_usd         NUMERIC(8,2)          -- total fee in USD
 tx_hash         TEXT                  -- Shardeum on-chain tx hash
@@ -213,7 +213,7 @@ completed_at    TIMESTAMPTZ
 Network Name:   Shardeum Sphinx
 RPC URL:        https://sphinx.shardeum.org/
 Chain ID:       8082
-Symbol:         SHM
+Symbol:         USDC
 Explorer:       https://explorer-sphinx.shardeum.org/
 ```
 
@@ -229,7 +229,7 @@ Explorer:       https://explorer-sphinx.shardeum.org/
 ### Notification Triggers
 | Event | Who gets notified | Message |
 |---|---|---|
-| On-ramp complete | Sender | "SHM purchased. Transfer in progress." |
+| On-ramp complete | Sender | "USDC purchased. Transfer in progress." |
 | On-chain confirmed | Sender | "Transfer confirmed on Shardeum. Tx: 0x..." |
 | Off-ramp complete | Receiver | "You received ₹XX,XXX from [Sender Name]" |
 | Transfer failed | Sender | "Transfer failed. Funds returned to your wallet." |
@@ -261,7 +261,7 @@ What to show judges (in order):
 |---|---|
 | Google login via Web3Auth | Real |
 | Transak on-ramp widget | Real (testnet) |
-| SHM on Shardeum testnet | Real — verifiable on Explorer |
+| USDC on Shardeum testnet | Real — verifiable on Explorer |
 | Smart contract routing | Real — verifiable on Explorer |
 | User B wallet balance update | Real on-chain |
 | INR off-ramp via OnMeta | Sandbox / mocked for demo |
@@ -273,11 +273,11 @@ What to show judges (in order):
 
 Build in this exact order to avoid blockers:
 
-1. **Smart Contract** — Write and deploy on Shardeum Sphinx via Remix. Get ABI + address.
+1. **Smart Contract** — Write and deploy on Shardeum Sphinx via Foundry. Get ABI + address.
 2. **Flutter Init** — Create Flutter project. Add all dependencies to `pubspec.yaml`.
 3. **Web3Auth** — Integrate login. Confirm wallet address is generated on login.
-4. **web3dart** — Connect to Shardeum RPC. Read wallet SHM balance. Call contract.
-5. **Transak WebView** — Embed widget. Test USD → SHM on testnet.
+4. **web3dart** — Connect to Shardeum RPC. Read wallet USDC balance. Call contract.
+5. **Transak WebView** — Embed widget. Test USD → USDC on testnet.
 6. **OnMeta** — Integrate off-ramp API. Test in sandbox.
 7. **Neon DB** — Set up schema. Wire up user creation and transaction logging.
 8. **All Screens** — Build UI in order from Section 5.
@@ -313,7 +313,7 @@ Store all secrets in a `.env` file (never commit to git):
 ```
 SHARDEUM_RPC_URL=https://sphinx.shardeum.org/
 SHARDEUM_CHAIN_ID=8082
-CONTRACT_ADDRESS=<deployed contract address from Remix>
+CONTRACT_ADDRESS=<deployed contract address from Forge>
 CONTRACT_ABI=<ABI JSON string>
 TRANSAK_API_KEY=<your Transak API key>
 ONMETA_API_KEY=<your OnMeta API key>
@@ -330,7 +330,7 @@ FIREBASE_PROJECT_ID=<your Firebase project ID>
 - RBI / FinCEN regulatory licensing
 - Production off-ramp for all currency corridors
 - iOS App Store submission
-- SHM price volatility hedging
+- USDC price volatility hedging
 - Customer support system
 - Multi-currency beyond USD → INR
 
@@ -339,8 +339,8 @@ FIREBASE_PROJECT_ID=<your Firebase project ID>
 ## 15. Key Constraints
 
 - **Shardeum only** — no other blockchain. All on-chain activity on Shardeum Sphinx Testnet.
-- **No own liquidity pool** — route through Shardeum DEX. RemitFlow holds zero SHM.
-- **No Hardhat / Foundry** — Remix IDE only for smart contract.
+- **No own liquidity pool** — route through Shardeum DEX. RemitFlow holds zero USDC.
+- **Foundry for Smart Contracts** — No Remix IDE or Hardhat.
 - **No Supabase** — Neon for database.
 - **No MetaMask for users** — Web3Auth only. Fully abstracted.
 - **Flutter only** — no Next.js or web frontend.

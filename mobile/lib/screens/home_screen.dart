@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
@@ -9,7 +10,9 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBody: true,
       backgroundColor: AppTheme.surfaceContainerLowest,
+      bottomNavigationBar: const _BottomNavBar(),
       body: Stack(
         children: [
           // ── Grain Texture Overlay ──────────────────────────────
@@ -21,23 +24,23 @@ class HomeScreen extends StatelessWidget {
             child: SingleChildScrollView(
               padding: const EdgeInsets.only(bottom: 120),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const SizedBox(height: 16),
                   // ── Header / Greeting ─────────────────────────
                   const _GreetingSection(),
 
-                  const SizedBox(height: 64),
+                  const SizedBox(height: 24),
 
-                  // ── Portfolio Balance Hero ────────────────────
-                  const _BalanceHero(),
+                  // ── Balance Hero with Gradient Mesh ───────────
+                  const _BalanceHeroWithMesh(),
 
-                  const SizedBox(height: 48),
+                  const SizedBox(height: 32),
 
                   // ── Exchange Rate Ticker ──────────────────────
                   const _ExchangeRateTicker(),
 
-                  const SizedBox(height: 48),
+                  const SizedBox(height: 40),
 
                   // ── Recent Transactions ───────────────────────
                   const _RecentTransactions(),
@@ -45,9 +48,6 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
           ),
-
-          // ── Bottom Navigation Bar ─────────────────────────────
-          const _BottomNavBar(),
         ],
       ),
     );
@@ -94,7 +94,7 @@ class _GrainPainter extends CustomPainter {
 }
 
 // ═══════════════════════════════════════════════════════════════════════
-// GREETING SECTION — Avatar + "Hello Martin" in Newsreader serif
+// GREETING SECTION — Centered "Hello [avatar] Martin" (matching ref)
 // ═══════════════════════════════════════════════════════════════════════
 
 class _GreetingSection extends StatelessWidget {
@@ -102,14 +102,23 @@ class _GreetingSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+    return Center(
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Avatar
+          Text(
+            'Hello',
+            style: GoogleFonts.newsreader(
+              fontSize: 18,
+              fontWeight: FontWeight.w400,
+              color: AppTheme.onSurface,
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Avatar — inline between Hello and Martin
           Container(
-            width: 44,
-            height: 44,
+            width: 32,
+            height: 32,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: AppTheme.surfaceContainer,
@@ -121,40 +130,13 @@ class _GreetingSection extends StatelessWidget {
               ),
             ),
           ),
-
-          const SizedBox(width: 12),
-
-          // Greeting
+          const SizedBox(width: 8),
           Text(
-            'Hello Martin',
+            'Martin',
             style: GoogleFonts.newsreader(
-              fontSize: 24,
+              fontSize: 18,
               fontWeight: FontWeight.w400,
               color: AppTheme.onSurface,
-            ),
-          ),
-
-          const Spacer(),
-
-          // Country flag
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: AppTheme.surfaceContainerLow,
-              borderRadius: BorderRadius.circular(9999),
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text('🇺🇸', style: TextStyle(fontSize: 16)),
-                SizedBox(width: 4),
-                Text('USD', style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.onSurfaceVariant,
-                  letterSpacing: 1.2,
-                )),
-              ],
             ),
           ),
         ],
@@ -164,41 +146,180 @@ class _GreetingSection extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════════════
-// BALANCE HERO — Large serif balance + "Available Balance" subtitle
+// BALANCE HERO WITH MESH — Gradient blob + "You have saved" + balance
 // ═══════════════════════════════════════════════════════════════════════
 
-class _BalanceHero extends StatelessWidget {
-  const _BalanceHero();
+class _BalanceHeroWithMesh extends StatelessWidget {
+  const _BalanceHeroWithMesh();
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Big Balance
-        Text(
-          '\$2,450.00',
-          style: GoogleFonts.newsreader(
-            fontSize: 56,
-            fontWeight: FontWeight.w400,
-            color: AppTheme.vaultGreen,
-            letterSpacing: -1.5,
-            height: 1.0,
+    final screenWidth = MediaQuery.of(context).size.width;
+    return SizedBox(
+      width: screenWidth,
+      height: 280,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // ── Gradient Mesh Blob ─────────────────────────────────
+          Positioned.fill(
+            child: CustomPaint(
+              painter: _MeshBlobPainter(),
+            ),
           ),
-        ),
 
-        const SizedBox(height: 8),
+          // ── Text Content over the mesh ────────────────────────
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // "You have saved" context text
+              Text(
+                'You have saved',
+                style: GoogleFonts.newsreader(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w400,
+                  color: AppTheme.onSurface.withValues(alpha: 0.65),
+                ),
+              ),
+              const SizedBox(height: 6),
 
-        // Subtitle
-        Text(
-          'Available Balance',
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 14,
-            color: AppTheme.onSurfaceVariant.withValues(alpha: 0.7),
+              // Earned badge + "on transfers" row
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Lime green pill with saved amount
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(9999),
+                    ),
+                    child: Text(
+                      '\$348.71',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF1A1C1C),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    '→',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: AppTheme.onSurface.withValues(alpha: 0.5),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'for a balance of',
+                    style: GoogleFonts.newsreader(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w400,
+                      color: AppTheme.onSurface.withValues(alpha: 0.65),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              // Big Balance
+              Text(
+                '\$ 2,450.00',
+                style: GoogleFonts.newsreader(
+                  fontSize: 52,
+                  fontWeight: FontWeight.w400,
+                  color: AppTheme.vaultGreen,
+                  letterSpacing: -1.5,
+                  height: 1.0,
+                ),
+              ),
+            ],
           ),
-        ),
+        ],
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// MESH BLOB PAINTER — Organic gradient shapes (green/lime/blue)
+// ═══════════════════════════════════════════════════════════════════════
+
+class _MeshBlobPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cx = size.width / 2;
+    final cy = size.height / 2;
+
+    // ── Large green/lime blob (center-right) ─────────────────────
+    _drawBlob(
+      canvas,
+      center: Offset(cx + 20, cy + 20),
+      radiusX: size.width * 0.42,
+      radiusY: size.height * 0.52,
+      colors: [
+        const Color(0xFFD9F542).withValues(alpha: 0.35),
+        const Color(0xFF8FB89A).withValues(alpha: 0.25),
+        const Color(0xFFD9F542).withValues(alpha: 0.08),
+      ],
+    );
+
+    // ── Dark blue-green blob (center-left, lower) ────────────────
+    _drawBlob(
+      canvas,
+      center: Offset(cx - 30, cy + 40),
+      radiusX: size.width * 0.30,
+      radiusY: size.height * 0.38,
+      colors: [
+        const Color(0xFF34495D).withValues(alpha: 0.30),
+        const Color(0xFF476556).withValues(alpha: 0.20),
+        const Color(0xFF34495D).withValues(alpha: 0.05),
+      ],
+    );
+
+    // ── Soft lime highlight (top-center) ─────────────────────────
+    _drawBlob(
+      canvas,
+      center: Offset(cx + 40, cy - 30),
+      radiusX: size.width * 0.28,
+      radiusY: size.height * 0.30,
+      colors: [
+        const Color(0xFFD9F542).withValues(alpha: 0.20),
+        const Color(0xFFE8F5A0).withValues(alpha: 0.10),
+        const Color(0xFFD9F542).withValues(alpha: 0.0),
       ],
     );
   }
+
+  void _drawBlob(
+    Canvas canvas, {
+    required Offset center,
+    required double radiusX,
+    required double radiusY,
+    required List<Color> colors,
+  }) {
+    final rect = Rect.fromCenter(
+      center: center,
+      width: radiusX * 2,
+      height: radiusY * 2,
+    );
+    final paint = Paint()
+      ..shader = ui.Gradient.radial(
+        center,
+        radiusX,
+        colors,
+        [0.0, 0.5, 1.0],
+        TileMode.clamp,
+      )
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 30);
+
+    canvas.drawOval(rect, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -286,11 +407,10 @@ class _RecentTransactions extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                'Recent Transaction',
+                'Recent Transactions',
                 style: GoogleFonts.newsreader(
                   fontSize: 24,
                   fontWeight: FontWeight.w700,
-                  fontStyle: FontStyle.italic,
                   color: AppTheme.onSurface,
                 ),
               ),
@@ -309,9 +429,9 @@ class _RecentTransactions extends StatelessWidget {
           const SizedBox(height: 24),
 
           // Transaction 1 — Sent to India
-          _TransactionItem(
+          const _TransactionItem(
             icon: Icons.arrow_upward_rounded,
-            gradientColors: const [Color(0xFF8FB89A), Color(0xFF476556)],
+            gradientColors: [Color(0xFF8FB89A), Color(0xFF476556)],
             title: 'Sent to Priya Sharma',
             subtitle: 'Mar 23, 14:30',
             amount: '-\$500.00',
@@ -320,12 +440,12 @@ class _RecentTransactions extends StatelessWidget {
             flag: '🇮🇳',
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
 
           // Transaction 2 — Received from US
-          _TransactionItem(
+          const _TransactionItem(
             icon: Icons.arrow_downward_rounded,
-            gradientColors: const [Color(0xFF7A8FA6), Color(0xFF34495D)],
+            gradientColors: [Color(0xFF7A8FA6), Color(0xFF34495D)],
             title: 'Received from John Davis',
             subtitle: 'Mar 21, 09:15',
             amount: '+\$1,200.00',
@@ -334,12 +454,12 @@ class _RecentTransactions extends StatelessWidget {
             flag: '🇺🇸',
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
 
           // Transaction 3 — Sent to India
-          _TransactionItem(
+          const _TransactionItem(
             icon: Icons.arrow_upward_rounded,
-            gradientColors: const [Color(0xFF8FB89A), Color(0xFF476556)],
+            gradientColors: [Color(0xFF8FB89A), Color(0xFF476556)],
             title: 'Sent to Rahul Verma',
             subtitle: 'Mar 18, 20:45',
             amount: '-\$250.00',
@@ -410,9 +530,8 @@ class _TransactionItem extends StatelessWidget {
               Text(
                 title,
                 style: GoogleFonts.newsreader(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  fontStyle: FontStyle.italic,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w500,
                   color: AppTheme.onSurface,
                 ),
               ),
@@ -475,75 +594,79 @@ class _BottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Positioned(
-      left: 0,
-      right: 0,
-      bottom: 0,
-      child: Container(
-        padding: EdgeInsets.only(
-          left: 32,
-          right: 32,
-          top: 16,
-          bottom: MediaQuery.of(context).padding.bottom + 16,
+    return Container(
+      padding: const EdgeInsets.only(
+        left: 32,
+        right: 32,
+        top: 32,
+        bottom: 16,
+      ),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            AppTheme.surfaceContainerLowest.withValues(alpha: 0.0),
+            AppTheme.surfaceContainerLowest.withValues(alpha: 0.95),
+            AppTheme.surfaceContainerLowest,
+          ],
+          stops: const [0.0, 0.4, 1.0],
         ),
-        decoration: BoxDecoration(
-          color: AppTheme.surface.withValues(alpha: 0.85),
-          // Glassmorphism backdrop — no borders (Digital Atelier "No-Line" rule)
-        ),
-        child: ClipRect(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Home (Active)
-              _NavItem(
-                icon: Icons.home_rounded,
-                label: 'Home',
-                isActive: true,
-              ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // Home (Active)
+            const _NavItem(
+              icon: Icons.home_rounded,
+              label: 'Home',
+              isActive: true,
+            ),
 
-              // Transfer — Signature lime green pill
-              GestureDetector(
-                onTap: () {},
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(9999),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppTheme.primaryContainer.withValues(alpha: 0.3),
-                        blurRadius: 24,
-                        offset: const Offset(0, 8),
+            // Transfer — Signature lime green pill
+            GestureDetector(
+              onTap: () {},
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(9999),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.primaryContainer.withValues(alpha: 0.3),
+                      blurRadius: 24,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.send_rounded, size: 18, color: Color(0xFF1A1C1C)),
+                    const SizedBox(width: 8),
+                    Text(
+                      'TRANSFER',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF1A1C1C),
+                        letterSpacing: 2.5,
                       ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.send_rounded, size: 18, color: Color(0xFF1A1C1C)),
-                      const SizedBox(width: 8),
-                      Text(
-                        'TRANSFER',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF1A1C1C),
-                          letterSpacing: 2.5,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
+            ),
 
-              // Settings
-              _NavItem(
-                icon: Icons.settings_rounded,
-                label: 'Settings',
-                isActive: false,
-              ),
-            ],
-          ),
+            // Settings
+            const _NavItem(
+              icon: Icons.settings_rounded,
+              label: 'Settings',
+              isActive: false,
+            ),
+          ],
         ),
       ),
     );

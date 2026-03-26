@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'theme/app_theme.dart';
 import 'screens/login_screen.dart';
+import 'screens/home_screen.dart';
+import 'services/auth_service.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
@@ -13,6 +15,8 @@ void main() {
       systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );
+
+  await AuthService().init();
 
   runApp(const RemitFlowApp());
 }
@@ -26,7 +30,15 @@ class RemitFlowApp extends StatelessWidget {
       title: 'RemitFlow',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: const LoginScreen(),
+      home: ListenableBuilder(
+        listenable: AuthService(),
+        builder: (context, _) {
+          if (AuthService().isAuthenticated) {
+            return const HomeScreen();
+          }
+          return const LoginScreen();
+        },
+      ),
     );
   }
 }

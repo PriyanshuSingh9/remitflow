@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.example.remitflow"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -24,10 +24,11 @@ android {
         applicationId = "com.example.remitflow"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        minSdk = 26
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        manifestPlaceholders["web3authScheme"] = "com.example.remitflow"
     }
 
     buildTypes {

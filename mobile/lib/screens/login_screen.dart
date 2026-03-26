@@ -3,17 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../theme/app_theme.dart';
-import 'home_screen.dart';
+import '../services/auth_service.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
-
-  void _navigateToHome(BuildContext context) {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const HomeScreen()),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -109,21 +102,21 @@ class LoginScreen extends StatelessWidget {
                     context: context,
                     iconWidget: const FaIcon(FontAwesomeIcons.google, size: 20),
                     label: 'Continue with Google',
-                    onPressed: () => _navigateToHome(context),
+                    onPressed: () => AuthService().loginWithGoogle(),
                   ),
                   const SizedBox(height: 16),
                   _buildSocialButton(
                     context: context,
                     iconWidget: const FaIcon(FontAwesomeIcons.apple, size: 20),
                     label: 'Continue with Apple',
-                    onPressed: () => _navigateToHome(context),
+                    onPressed: () {}, // To be implemented
                   ),
                   const SizedBox(height: 16),
                   _buildSocialButton(
                     context: context,
                     iconWidget: const Icon(Icons.email_outlined, size: 20),
                     label: 'Continue with Email',
-                    onPressed: () => _navigateToHome(context),
+                    onPressed: () {}, // To be implemented later (requires prompt for email)
                     isPrimary: true, // Use brand colors for email
                   ),
                   const SizedBox(height: 16),
@@ -145,6 +138,24 @@ class LoginScreen extends StatelessWidget {
                 ],
               ),
             ),
+          ),
+          
+          // Loading Overlay
+          ListenableBuilder(
+            listenable: AuthService(),
+            builder: (context, _) {
+              if (AuthService().isLoading) {
+                return Positioned.fill(
+                  child: Container(
+                    color: Colors.black45,
+                    child: const Center(
+                      child: CircularProgressIndicator(color: AppTheme.vaultGreen),
+                    ),
+                  ),
+                );
+              }
+              return const SizedBox.shrink();
+            },
           ),
         ],
       ),

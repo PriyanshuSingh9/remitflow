@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'theme/app_theme.dart';
-import 'screens/home_screen.dart';
+import 'screens/login_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -9,10 +9,11 @@ void main() {
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.dark,
-      systemNavigationBarColor: AppTheme.surface,
+      systemNavigationBarColor: AppTheme.surfaceContainerLowest, // Match Login and Home bottom backgrounds
       systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );
+
   runApp(const RemitFlowApp());
 }
 
@@ -25,7 +26,7 @@ class RemitFlowApp extends StatelessWidget {
       title: 'RemitFlow',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: const HomeScreen(),
+      home: const LoginScreen(),
     );
   }
 }

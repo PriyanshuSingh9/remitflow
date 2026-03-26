@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum TransactionStatus {
+  pending
+  on_chain
+  off_ramp
+  completed
+  failed
+}
+
+model User {
+  id                      String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email                   String        @unique @db.Text
+  walletAddress           String        @unique @map("wallet_address") @db.Text
+  country                 String        @db.Text
+  bankDetails             String?       @map("bank_details") @db.Text
+  createdAt               DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  sentTransactions        Transaction[] @relation("sender")
+  receivedTransactions    Transaction[] @relation("receiver")
+
+  @@map("users")
+}
+
+model Transaction {
+  id            String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  senderId      String            @map("sender_id") @db.Uuid
+  receiverId    String            @map("receiver_id") @db.Uuid
+  sender        User              @relation("sender", fields: [senderId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  receiver      User              @relation("receiver", fields: [receiverId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  amountUsd     Decimal           @map("amount_usd") @db.Decimal(12, 2)
+  amountUsdc    Decimal           @map("amount_usdc") @db.Decimal(18, 8)
+  amountInr     Decimal           @map("amount_inr") @db.Decimal(12, 2)
+  feeUsd        Decimal           @map("fee_usd") @db.Decimal(8, 2)
+  txHash        String?           @unique @map("tx_hash") @db.Text
+  status        TransactionStatus @default(pending)
+  createdAt     DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  completedAt   DateTime?         @map("completed_at") @db.Timestamptz(6)
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("transactions")
+}

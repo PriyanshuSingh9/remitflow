@@ -17,15 +17,36 @@ enum TransactionStatus {
 
 model User {
   id                      String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  firebaseUid             String?       @unique @map("firebase_uid") @db.Text
   email                   String        @unique @db.Text
+  displayName             String?       @map("display_name") @db.Text
+  photoUrl                String?       @map("photo_url") @db.Text
+  phoneNumber             String?       @map("phone_number") @db.Text
   walletAddress           String        @unique @map("wallet_address") @db.Text
-  country                 String        @db.Text
+  country                 String        @default("US") @db.Text
   bankDetails             String?       @map("bank_details") @db.Text
+  availableBalanceUsd     Decimal       @default(0) @map("available_balance_usd") @db.Decimal(12, 2)
+  lifetimeSavingsUsd      Decimal       @default(0) @map("lifetime_savings_usd") @db.Decimal(12, 2)
   createdAt               DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
   sentTransactions        Transaction[] @relation("sender")
   receivedTransactions    Transaction[] @relation("receiver")
 
   @@map("users")
+}
+
+model ExchangeRate {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  baseCurrency      String   @map("base_currency") @db.VarChar(3)
+  quoteCurrency     String   @map("quote_currency") @db.VarChar(3)
+  rate              Decimal  @db.Decimal(12, 4)
+  cheaperPercentage Decimal  @map("cheaper_percentage") @db.Decimal(5, 2)
+  asOf              DateTime @map("as_of") @db.Timestamptz(6)
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([baseCurrency, quoteCurrency])
+  @@map("exchange_rates")
 }
 
 model Transaction {

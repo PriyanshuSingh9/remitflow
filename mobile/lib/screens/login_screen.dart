@@ -1,12 +1,39 @@
 import 'dart:ui';
+
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import '../theme/app_theme.dart';
+
+import '../services/app_data_service.dart';
 import '../services/auth_service.dart';
+import '../theme/app_theme.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
+
+  Future<void> _handleGoogleLogin(BuildContext context) async {
+    final auth = AuthService();
+    final success = await auth.loginWithGoogle();
+    if (!success && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(auth.lastError ?? 'Google sign-in did not complete.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    await AppDataService().bootstrapAuthenticatedUser(forceRefresh: true);
+    if (context.mounted && AppDataService().bootstrapErrorMessage != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppDataService().bootstrapErrorMessage!),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -14,7 +41,6 @@ class LoginScreen extends StatelessWidget {
       backgroundColor: AppTheme.surfaceContainerLowest,
       body: Stack(
         children: [
-          // Background organic shapes
           Positioned(
             top: -100,
             right: -50,
@@ -39,7 +65,6 @@ class LoginScreen extends StatelessWidget {
               ),
             ),
           ),
-          // Glass blur overlay
           Positioned.fill(
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 70, sigmaY: 70),
@@ -48,15 +73,13 @@ class LoginScreen extends StatelessWidget {
               ),
             ),
           ),
-          
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 16),
-                  // Logo
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -64,29 +87,25 @@ class LoginScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Icon(
-                      Icons.account_balance_wallet_rounded, 
-                      color: AppTheme.primaryContainer, 
-                      size: 32
+                      Icons.account_balance_wallet_rounded,
+                      color: AppTheme.primaryContainer,
+                      size: 32,
                     ),
                   ),
                   const SizedBox(height: 48),
-                  
-                  // Headline
                   Text(
                     'Global Wealth,\nSeamlessly\nCurated.',
                     style: GoogleFonts.newsreader(
                       fontSize: 48,
                       fontWeight: FontWeight.w400,
                       color: AppTheme.onSurface,
-                      letterSpacing: -1.0,
+                      letterSpacing: -1,
                       height: 1.05,
                     ),
                   ),
                   const SizedBox(height: 24),
-                  
-                  // Subtitle
                   Text(
-                    'Experience the modern way to manage cross-border remittances. Beautiful, secure, and effortlessly fast.',
+                    'Experience the modern way to manage cross-border remittances. Beautiful, secure, and now backed by live Neon data.',
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 16,
                       fontWeight: FontWeight.w400,
@@ -94,14 +113,11 @@ class LoginScreen extends StatelessWidget {
                       height: 1.5,
                     ),
                   ),
-                  
                   const Spacer(),
-                  
-                  // Google Login Button — single tap, native popup
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      onPressed: () => AuthService().loginWithGoogle(),
+                      onPressed: () => _handleGoogleLogin(context),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.surfaceContainerLowest,
                         foregroundColor: AppTheme.onSurface,
@@ -124,11 +140,9 @@ class LoginScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  
-                  // Terms and conditions
                   Center(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Text(
                         'By continuing, you agree to our Terms of Service and Privacy Policy.',
                         textAlign: TextAlign.center,
@@ -143,22 +157,20 @@ class LoginScreen extends StatelessWidget {
               ),
             ),
           ),
-          
-          // Loading Overlay
           ListenableBuilder(
             listenable: AuthService(),
             builder: (context, _) {
-              if (AuthService().isLoading) {
-                return Positioned.fill(
-                  child: Container(
-                    color: Colors.black45,
-                    child: const Center(
-                      child: CircularProgressIndicator(color: AppTheme.vaultGreen),
-                    ),
-                  ),
-                );
+              if (!AuthService().isLoading) {
+                return const SizedBox.shrink();
               }
-              return const SizedBox.shrink();
+              return Positioned.fill(
+                child: Container(
+                  color: Colors.black45,
+                  child: const Center(
+                    child: CircularProgressIndicator(color: AppTheme.vaultGreen),
+                  ),
+                ),
+              );
             },
           ),
         ],

@@ -1,7 +1,12 @@
 import 'dart:math';
 import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
+
+import '../models/app_models.dart';
+import '../services/app_data_service.dart';
 import '../theme/app_theme.dart';
 import 'transfer_screen.dart';
 
@@ -10,54 +15,92 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      extendBody: true,
-      backgroundColor: AppTheme.surfaceContainerLowest,
-      bottomNavigationBar: const _BottomNavBar(),
-      body: Stack(
-        children: [
-          // ── Grain Texture Overlay ──────────────────────────────
-          const _GrainOverlay(),
+    final appData = AppDataService();
 
-          // ── Main Scrollable Content ───────────────────────────
-          SafeArea(
-            bottom: false,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.only(bottom: 120),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 16),
-                  // ── Header / Greeting ─────────────────────────
-                  const _GreetingSection(),
-
-                  const SizedBox(height: 24),
-
-                  // ── Balance Hero with Gradient Mesh ───────────
-                  const _BalanceHeroWithMesh(),
-
-                  const SizedBox(height: 32),
-
-                  // ── Exchange Rate Ticker ──────────────────────
-                  const _ExchangeRateTicker(),
-
-                  const SizedBox(height: 40),
-
-                  // ── Recent Transactions ───────────────────────
-                  const _RecentTransactions(),
-                ],
-              ),
+    return ListenableBuilder(
+      listenable: appData,
+      builder: (context, _) {
+        final dashboard = appData.dashboard;
+        if (dashboard == null) {
+          return const Scaffold(
+            backgroundColor: AppTheme.surfaceContainerLowest,
+            body: Center(
+              child: CircularProgressIndicator(color: AppTheme.vaultGreen),
             ),
+          );
+        }
+
+        return Scaffold(
+          extendBody: true,
+          backgroundColor: AppTheme.surfaceContainerLowest,
+          bottomNavigationBar: const _BottomNavBar(),
+          body: Stack(
+            children: [
+              const _GrainOverlay(),
+              RefreshIndicator(
+                color: AppTheme.vaultGreen,
+                onRefresh: appData.refreshDashboard,
+                child: SafeArea(
+                  bottom: false,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.only(bottom: 120),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const SizedBox(height: 16),
+                        _GreetingSection(user: dashboard.user),
+                        const SizedBox(height: 24),
+                        _BalanceHeroWithMesh(user: dashboard.user),
+                        const SizedBox(height: 32),
+                        _ExchangeRateTicker(exchangeRate: dashboard.exchangeRate),
+                        if (appData.bootstrapErrorMessage != null) ...[
+                          const SizedBox(height: 20),
+                          _InlineError(message: appData.bootstrapErrorMessage!),
+                        ],
+                        const SizedBox(height: 40),
+                        _RecentTransactions(transactions: dashboard.recentTransactions),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════
-// GRAIN OVERLAY — Subtle noise texture for "Digital Atelier" soul
-// ═══════════════════════════════════════════════════════════════════════
+class _InlineError extends StatelessWidget {
+  const _InlineError({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppTheme.errorContainer,
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Text(
+          message,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.error,
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class _GrainOverlay extends StatelessWidget {
   const _GrainOverlay();
@@ -94,15 +137,16 @@ class _GrainPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-// ═══════════════════════════════════════════════════════════════════════
-// GREETING SECTION — Centered "Hello [avatar] Martin" (matching ref)
-// ═══════════════════════════════════════════════════════════════════════
-
 class _GreetingSection extends StatelessWidget {
-  const _GreetingSection();
+  const _GreetingSection({required this.user});
+
+  final SessionUser user;
 
   @override
   Widget build(BuildContext context) {
+    final initial =
+        user.preferredName.isNotEmpty ? user.preferredName[0].toUpperCase() : 'R';
+
     return Center(
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -116,29 +160,34 @@ class _GreetingSection extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          // Avatar — inline between Hello and Martin
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppTheme.surfaceContainer,
-              image: const DecorationImage(
-                image: NetworkImage(
-                  'https://lh3.googleusercontent.com/aida/ADBb0ujZGxMKC7TXq8QflzraSuQTWFLlyOLkQsAQUdLdj6ZO-jjPmYWIolHGsznK9TjNzSDK4LXLx9LVTstYQvz_G6QymVFo9bx5YERLXNGz7p6GzSq9hta17pQMx6wAHUbl1oVxl3x6eWDEd3HrRxOyxr1TrltWrqD_eD2Rj3NGrCkXKcaDb_jgBRbDR3lCwZHzuWtqEniZPrEbR13mDiGuuHLmLrSj9UR_fH7B5KS-Ie5Pa12C_kWrkU76gmKad78CxVa7wikXvIt0Bw',
-                ),
-                fit: BoxFit.cover,
-              ),
-            ),
+          CircleAvatar(
+            radius: 16,
+            backgroundColor: AppTheme.surfaceContainer,
+            backgroundImage: user.photoUrl != null ? NetworkImage(user.photoUrl!) : null,
+            child: user.photoUrl == null
+                ? Text(
+                    initial,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.vaultGreen,
+                    ),
+                  )
+                : null,
           ),
           const SizedBox(width: 8),
           Text(
-            'Martin',
+            user.preferredName,
             style: GoogleFonts.newsreader(
               fontSize: 18,
               fontWeight: FontWeight.w400,
               color: AppTheme.onSurface,
             ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            _flagForCountry(user.country),
+            style: const TextStyle(fontSize: 18),
           ),
         ],
       ),
@@ -146,12 +195,10 @@ class _GreetingSection extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════
-// BALANCE HERO WITH MESH — Gradient blob + "You have saved" + balance
-// ═══════════════════════════════════════════════════════════════════════
-
 class _BalanceHeroWithMesh extends StatelessWidget {
-  const _BalanceHeroWithMesh();
+  const _BalanceHeroWithMesh({required this.user});
+
+  final SessionUser user;
 
   @override
   Widget build(BuildContext context) {
@@ -162,18 +209,14 @@ class _BalanceHeroWithMesh extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // ── Gradient Mesh Blob ─────────────────────────────────
           Positioned.fill(
             child: CustomPaint(
               painter: _MeshBlobPainter(),
             ),
           ),
-
-          // ── Text Content over the mesh ────────────────────────
           Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // "You have saved" context text
               Text(
                 'You have saved',
                 style: GoogleFonts.newsreader(
@@ -183,12 +226,9 @@ class _BalanceHeroWithMesh extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 6),
-
-              // Earned badge + "on transfers" row
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Lime green pill with saved amount
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                     decoration: BoxDecoration(
@@ -196,7 +236,7 @@ class _BalanceHeroWithMesh extends StatelessWidget {
                       borderRadius: BorderRadius.circular(9999),
                     ),
                     child: Text(
-                      '\$348.71',
+                      _formatUsd(user.lifetimeSavingsUsd),
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
@@ -224,16 +264,14 @@ class _BalanceHeroWithMesh extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 12),
-
-              // Big Balance
               Text(
-                '\$ 2,450.00',
+                _formatUsd(user.availableBalanceUsd),
                 style: GoogleFonts.newsreader(
                   fontSize: 52,
                   fontWeight: FontWeight.w400,
                   color: AppTheme.vaultGreen,
                   letterSpacing: -1.5,
-                  height: 1.0,
+                  height: 1,
                 ),
               ),
             ],
@@ -244,17 +282,12 @@ class _BalanceHeroWithMesh extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════
-// MESH BLOB PAINTER — Organic gradient shapes (green/lime/blue)
-// ═══════════════════════════════════════════════════════════════════════
-
 class _MeshBlobPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final cx = size.width / 2;
     final cy = size.height / 2;
 
-    // ── Large green/lime blob (center-right) ─────────────────────
     _drawBlob(
       canvas,
       center: Offset(cx + 20, cy + 20),
@@ -267,7 +300,6 @@ class _MeshBlobPainter extends CustomPainter {
       ],
     );
 
-    // ── Dark blue-green blob (center-left, lower) ────────────────
     _drawBlob(
       canvas,
       center: Offset(cx - 30, cy + 40),
@@ -280,7 +312,6 @@ class _MeshBlobPainter extends CustomPainter {
       ],
     );
 
-    // ── Soft lime highlight (top-center) ─────────────────────────
     _drawBlob(
       canvas,
       center: Offset(cx + 40, cy - 30),
@@ -289,7 +320,7 @@ class _MeshBlobPainter extends CustomPainter {
       colors: [
         const Color(0xFFD9F542).withValues(alpha: 0.20),
         const Color(0xFFE8F5A0).withValues(alpha: 0.10),
-        const Color(0xFFD9F542).withValues(alpha: 0.0),
+        const Color(0xFFD9F542).withValues(alpha: 0),
       ],
     );
   }
@@ -323,12 +354,10 @@ class _MeshBlobPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-// ═══════════════════════════════════════════════════════════════════════
-// EXCHANGE RATE TICKER — Live USD/INR rate
-// ═══════════════════════════════════════════════════════════════════════
-
 class _ExchangeRateTicker extends StatelessWidget {
-  const _ExchangeRateTicker();
+  const _ExchangeRateTicker({required this.exchangeRate});
+
+  final ExchangeRateData exchangeRate;
 
   @override
   Widget build(BuildContext context) {
@@ -345,7 +374,7 @@ class _ExchangeRateTicker extends StatelessWidget {
             const Text('🇺🇸', style: TextStyle(fontSize: 18)),
             const SizedBox(width: 6),
             Text(
-              '1 USD',
+              '1 ${exchangeRate.baseCurrency}',
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
@@ -356,7 +385,7 @@ class _ExchangeRateTicker extends StatelessWidget {
             const Icon(Icons.sync_alt_rounded, size: 16, color: AppTheme.onSurfaceVariant),
             const SizedBox(width: 8),
             Text(
-              '₹83.42',
+              '₹${exchangeRate.rate.toStringAsFixed(2)}',
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
@@ -373,7 +402,7 @@ class _ExchangeRateTicker extends StatelessWidget {
                 borderRadius: BorderRadius.circular(9999),
               ),
               child: Text(
-                '2.3% cheaper',
+                '${exchangeRate.cheaperPercentage.toStringAsFixed(1)}% cheaper',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
@@ -389,12 +418,10 @@ class _ExchangeRateTicker extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════
-// RECENT TRANSACTIONS — Remittance-specific transactions
-// ═══════════════════════════════════════════════════════════════════════
-
 class _RecentTransactions extends StatelessWidget {
-  const _RecentTransactions();
+  const _RecentTransactions({required this.transactions});
+
+  final List<TransactionSummary> transactions;
 
   @override
   Widget build(BuildContext context) {
@@ -402,7 +429,6 @@ class _RecentTransactions extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         children: [
-          // Section Header
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -416,58 +442,38 @@ class _RecentTransactions extends StatelessWidget {
                 ),
               ),
               Text(
-                'VIEW ALL',
+                '${transactions.length} LOADED',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
                   color: AppTheme.secondary,
-                  letterSpacing: 2.0,
+                  letterSpacing: 2,
                 ),
               ),
             ],
           ),
-
           const SizedBox(height: 24),
-
-          // Transaction 1 — Sent to India
-          const _TransactionItem(
-            icon: Icons.arrow_upward_rounded,
-            gradientColors: [Color(0xFF8FB89A), Color(0xFF476556)],
-            title: 'Sent to Priya Sharma',
-            subtitle: 'Mar 23, 14:30',
-            amount: '-\$500.00',
-            amountColor: AppTheme.onSurface,
-            secondaryAmount: '₹41,710.00',
-            flag: '🇮🇳',
-          ),
-
-          const SizedBox(height: 20),
-
-          // Transaction 2 — Received from US
-          const _TransactionItem(
-            icon: Icons.arrow_downward_rounded,
-            gradientColors: [Color(0xFF7A8FA6), Color(0xFF34495D)],
-            title: 'Received from John Davis',
-            subtitle: 'Mar 21, 09:15',
-            amount: '+\$1,200.00',
-            amountColor: AppTheme.vaultGreen,
-            secondaryAmount: '₹1,00,104.00',
-            flag: '🇺🇸',
-          ),
-
-          const SizedBox(height: 20),
-
-          // Transaction 3 — Sent to India
-          const _TransactionItem(
-            icon: Icons.arrow_upward_rounded,
-            gradientColors: [Color(0xFF8FB89A), Color(0xFF476556)],
-            title: 'Sent to Rahul Verma',
-            subtitle: 'Mar 18, 20:45',
-            amount: '-\$250.00',
-            amountColor: AppTheme.onSurface,
-            secondaryAmount: '₹20,855.00',
-            flag: '🇮🇳',
-          ),
+          if (transactions.isEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceContainerLow,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                'No transactions yet. Your next transfer will appear here.',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 14,
+                  color: AppTheme.onSurfaceVariant,
+                ),
+              ),
+            )
+          else
+            ...transactions.map((transaction) => Padding(
+                  padding: const EdgeInsets.only(bottom: 20),
+                  child: _TransactionItem(transaction: transaction),
+                )),
         ],
       ),
     );
@@ -475,31 +481,18 @@ class _RecentTransactions extends StatelessWidget {
 }
 
 class _TransactionItem extends StatelessWidget {
-  final IconData icon;
-  final List<Color> gradientColors;
-  final String title;
-  final String subtitle;
-  final String amount;
-  final Color amountColor;
-  final String secondaryAmount;
-  final String flag;
+  const _TransactionItem({required this.transaction});
 
-  const _TransactionItem({
-    required this.icon,
-    required this.gradientColors,
-    required this.title,
-    required this.subtitle,
-    required this.amount,
-    required this.amountColor,
-    required this.secondaryAmount,
-    required this.flag,
-  });
+  final TransactionSummary transaction;
 
   @override
   Widget build(BuildContext context) {
+    final gradientColors = transaction.isSent
+        ? const [Color(0xFF8FB89A), Color(0xFF476556)]
+        : const [Color(0xFF7A8FA6), Color(0xFF34495D)];
+
     return Row(
       children: [
-        // Gradient circle icon
         Container(
           width: 48,
           height: 48,
@@ -512,24 +505,25 @@ class _TransactionItem extends StatelessWidget {
             ),
             boxShadow: [
               BoxShadow(
-                color: gradientColors[0].withValues(alpha: 0.2),
+                color: gradientColors.first.withValues(alpha: 0.2),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
             ],
           ),
-          child: Icon(icon, color: Colors.white, size: 22),
+          child: Icon(
+            transaction.isSent ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+            color: Colors.white,
+            size: 22,
+          ),
         ),
-
         const SizedBox(width: 16),
-
-        // Title + Subtitle
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                title,
+                '${transaction.isSent ? 'Sent to' : 'Received from'} ${transaction.counterparty.preferredName}',
                 style: GoogleFonts.newsreader(
                   fontSize: 17,
                   fontWeight: FontWeight.w500,
@@ -538,7 +532,7 @@ class _TransactionItem extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                subtitle,
+                DateFormat('MMM d, HH:mm').format(transaction.createdAt),
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 12,
                   color: AppTheme.onSurfaceVariant,
@@ -547,17 +541,15 @@ class _TransactionItem extends StatelessWidget {
             ],
           ),
         ),
-
-        // Amount + INR equivalent
         Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(
-              amount,
+              '${transaction.isSent ? '-' : '+'}${_formatUsd(transaction.amountUsd)}',
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
-                color: amountColor,
+                color: transaction.isSent ? AppTheme.onSurface : AppTheme.vaultGreen,
               ),
             ),
             const SizedBox(height: 2),
@@ -565,12 +557,12 @@ class _TransactionItem extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  flag,
+                  _flagForCountry(transaction.counterparty.country),
                   style: const TextStyle(fontSize: 10),
                 ),
                 const SizedBox(width: 3),
                 Text(
-                  secondaryAmount,
+                  '₹${NumberFormat('#,##,##0.00').format(transaction.amountInr)}',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 10,
                     color: AppTheme.onSurfaceVariant,
@@ -586,32 +578,23 @@ class _TransactionItem extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════
-// BOTTOM NAVIGATION BAR — Floating glassmorphism with Transfer pill
-// ═══════════════════════════════════════════════════════════════════════
-
 class _BottomNavBar extends StatelessWidget {
   const _BottomNavBar();
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.only(
-        left: 32,
-        right: 32,
-        top: 32,
-        bottom: 16,
-      ),
+      padding: const EdgeInsets.only(left: 32, right: 32, top: 32, bottom: 16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            AppTheme.surfaceContainerLowest.withValues(alpha: 0.0),
+            AppTheme.surfaceContainerLowest.withValues(alpha: 0),
             AppTheme.surfaceContainerLowest.withValues(alpha: 0.95),
             AppTheme.surfaceContainerLowest,
           ],
-          stops: const [0.0, 0.4, 1.0],
+          stops: const [0, 0.4, 1],
         ),
       ),
       child: SafeArea(
@@ -619,14 +602,11 @@ class _BottomNavBar extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Home (Active)
             const _NavItem(
               icon: Icons.home_rounded,
               label: 'Home',
               isActive: true,
             ),
-
-            // Transfer — Signature lime green pill
             GestureDetector(
               onTap: () {
                 Navigator.push(
@@ -665,8 +645,6 @@ class _BottomNavBar extends StatelessWidget {
                 ),
               ),
             ),
-
-            // Settings
             const _NavItem(
               icon: Icons.settings_rounded,
               label: 'Settings',
@@ -680,15 +658,15 @@ class _BottomNavBar extends StatelessWidget {
 }
 
 class _NavItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool isActive;
-
   const _NavItem({
     required this.icon,
     required this.label,
     required this.isActive,
   });
+
+  final IconData icon;
+  final String label;
+  final bool isActive;
 
   @override
   Widget build(BuildContext context) {
@@ -707,10 +685,25 @@ class _NavItem extends StatelessWidget {
             fontSize: 10,
             fontWeight: FontWeight.w600,
             color: color,
-            letterSpacing: 1.0,
+            letterSpacing: 1,
           ),
         ),
       ],
     );
+  }
+}
+
+String _formatUsd(double amount) {
+  return NumberFormat.currency(symbol: '\$', decimalDigits: 2).format(amount);
+}
+
+String _flagForCountry(String countryCode) {
+  switch (countryCode.toUpperCase()) {
+    case 'IN':
+      return '🇮🇳';
+    case 'US':
+      return '🇺🇸';
+    default:
+      return '🌍';
   }
 }

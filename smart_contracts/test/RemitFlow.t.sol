@@ -2,7 +2,9 @@
 pragma solidity ^0.8.18;
 
 import "../src/RemitFlow.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../src/mocks/MockUSDC.sol";
+import "../src/mocks/MockFalseReturnUSDC.sol";
 
 interface Vm {
     function prank(address msgSender) external;
@@ -62,5 +64,24 @@ contract RemitFlowTest {
         vm.prank(sender);
         remitFlow.transferUSDC(sender, 1);
     }
-}
 
+    function testRejectsNonContractUSDC() public {
+        vm.expectRevert(abi.encodeWithSelector(RemitFlow.InvalidUSDC.selector));
+        new RemitFlow(address(0x1234));
+    }
+
+    function testRejectsFalseReturningTokenTransfer() public {
+        MockFalseReturnUSDC falseToken = new MockFalseReturnUSDC();
+        RemitFlow falseFlow = new RemitFlow(address(falseToken));
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                SafeERC20.SafeERC20FailedOperation.selector,
+                address(falseToken)
+            )
+        );
+
+        vm.prank(sender);
+        falseFlow.transferUSDC(receiver, 1);
+    }
+}

@@ -12,6 +12,11 @@ Minimal Foundry workspace for the RemitFlow transfer contract.
 - Foundry installed
 - `SHARDEUM_RPC_URL` in `.env` for Shardeum deployment
 - `USDC_ADDRESS` and `PRIVATE_KEY` for broadcasting deployment
+- OpenZeppelin installed into `lib/`:
+
+```shell
+forge install --no-git OpenZeppelin/openzeppelin-contracts
+```
 
 ## Common commands
 
@@ -29,7 +34,6 @@ forge script script/DeployRemitFlow.s.sol:DeployRemitFlow --rpc-url $SHARDEUM_RP
 ```
 
 ## Notes
-- The setup uses no nested repos or vendored Solidity dependencies.
+- Solidity dependencies are installed locally with Foundry and are not committed.
 - Tests use a local cheatcode interface, so the workspace stays self-contained.
 - The contract emits the PRD event shape and moves USDC with `transferFrom`.
-

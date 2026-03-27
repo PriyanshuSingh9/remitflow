@@ -108,8 +108,9 @@ class AuthService extends ChangeNotifier {
     }
   }
 
-  Future<String?> getIdToken({bool forceRefresh = false}) {
-    return _auth.currentUser?.getIdToken(forceRefresh);
+  Future<String?> getIdToken({bool forceRefresh = false}) async {
+    if (_auth.currentUser == null) return null;
+    return await _auth.currentUser!.getIdToken(forceRefresh);
   }
 
   String _generatePrivateKey(String uid) {
@@ -126,7 +127,7 @@ class AuthService extends ChangeNotifier {
     try {
       final hexKey = _privKey!.startsWith('0x') ? _privKey! : '0x$_privKey';
       final credentials = EthPrivateKey.fromHex(hexKey);
-      _walletAddress = credentials.address.hexEip55;
+      _walletAddress = credentials.address.eip55With0x;
     } catch (error) {
       debugPrint('Error deriving wallet address: $error');
       _lastError = 'Could not derive the wallet address from the saved key.';

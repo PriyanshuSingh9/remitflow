@@ -10,7 +10,7 @@ Minimal Foundry workspace for the RemitFlow transfer contract.
 
 ## Requirements
 - Foundry installed
-- `SHARDEUM_RPC_URL` in `.env` for Shardeum deployment
+- `POLYGON_AMOY_RPC_URL` in `.env` for Polygon deployment
 - `USDC_ADDRESS` and `PRIVATE_KEY` for broadcasting deployment
 - OpenZeppelin installed into `lib/`:
 
@@ -30,7 +30,7 @@ forge snapshot
 ## Deploy
 
 ```shell
-forge script script/DeployRemitFlow.s.sol:DeployRemitFlow --rpc-url $SHARDEUM_RPC_URL --broadcast --private-key $PRIVATE_KEY
+forge script script/DeployRemitFlow.s.sol:DeployRemitFlow --rpc-url $POLYGON_AMOY_RPC_URL --broadcast --private-key $PRIVATE_KEY
 ```
 
 ## Notes

@@ -2,10 +2,9 @@
 src = "src"
 out = "out"
 libs = ["lib"]
-dotenv = true
 
 remappings = ["@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/"]
 
 [rpc_endpoints]
-shardeum = "${SHARDEUM_RPC_URL}"
+sphinx = "${SHARDEUM_RPC_URL}"
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options

@@ -97,6 +97,12 @@ class _TransferScreenState extends State<TransferScreen> {
   }
 
   @override
+  void dispose() {
+    _amountController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final appData = AppDataService();
     final dashboard = appData.dashboard;

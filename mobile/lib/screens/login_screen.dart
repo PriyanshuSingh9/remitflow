@@ -139,6 +139,17 @@ class LoginScreen extends StatelessWidget {
                       ),
                     ),
                   ),
+                  if (AuthService().errorMessage != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      AuthService().errorMessage!,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.error,
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 16),
                   Center(
                     child: Padding(

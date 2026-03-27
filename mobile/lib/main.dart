@@ -19,7 +19,6 @@ void main() async {
     ),
   );
 
-  await Firebase.initializeApp();
   await AuthService().init();
 
   runApp(const RemitFlowApp());

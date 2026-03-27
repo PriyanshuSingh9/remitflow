@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import '../models/app_models.dart';
 import '../services/app_data_service.dart';
 import '../theme/app_theme.dart';
+import '../services/auth_service.dart';
 import 'transfer_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -645,10 +646,14 @@ class _BottomNavBar extends StatelessWidget {
                 ),
               ),
             ),
-            const _NavItem(
-              icon: Icons.settings_rounded,
-              label: 'Settings',
-              isActive: false,
+            GestureDetector(
+              onTap: () async {
+                await AuthService().logout();
+              },
+              child: const _NavItem(
+                icon: Icons.logout_rounded,
+                label: 'Logout',
+                isActive: false,
             ),
           ],
         ),

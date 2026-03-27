@@ -97,27 +97,31 @@ class LoginScreen extends StatelessWidget {
                   
                   const Spacer(),
                   
-                  // Social Login Buttons
-                  _buildSocialButton(
-                    context: context,
-                    iconWidget: const FaIcon(FontAwesomeIcons.google, size: 20),
-                    label: 'Continue with Google',
-                    onPressed: () => AuthService().loginWithGoogle(),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildSocialButton(
-                    context: context,
-                    iconWidget: const FaIcon(FontAwesomeIcons.apple, size: 20),
-                    label: 'Continue with Apple',
-                    onPressed: () {}, // To be implemented
-                  ),
-                  const SizedBox(height: 16),
-                  _buildSocialButton(
-                    context: context,
-                    iconWidget: const Icon(Icons.email_outlined, size: 20),
-                    label: 'Continue with Email',
-                    onPressed: () {}, // To be implemented later (requires prompt for email)
-                    isPrimary: true, // Use brand colors for email
+                  // Google Login Button — single tap, native popup
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => AuthService().loginWithGoogle(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.surfaceContainerLowest,
+                        foregroundColor: AppTheme.onSurface,
+                        padding: const EdgeInsets.symmetric(vertical: 18),
+                        elevation: 0.5,
+                        side: BorderSide(color: AppTheme.outlineVariant.withOpacity(0.5)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(9999),
+                        ),
+                      ),
+                      icon: const FaIcon(FontAwesomeIcons.google, size: 20),
+                      label: Text(
+                        'Continue with Google',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 16),
                   
@@ -158,40 +162,6 @@ class LoginScreen extends StatelessWidget {
             },
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildSocialButton({
-    required BuildContext context,
-    required Widget iconWidget,
-    required String label,
-    required VoidCallback onPressed,
-    bool isPrimary = false,
-  }) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton.icon(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: isPrimary ? AppTheme.primaryContainer : AppTheme.surfaceContainerLowest,
-          foregroundColor: isPrimary ? AppTheme.vaultGreen : AppTheme.onSurface,
-          padding: const EdgeInsets.symmetric(vertical: 18),
-          elevation: isPrimary ? 0 : 0.5,
-          side: isPrimary ? null : BorderSide(color: AppTheme.outlineVariant.withOpacity(0.5)),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(9999),
-          ),
-        ),
-        icon: iconWidget,
-        label: Text(
-          label,
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 15,
-            fontWeight: isPrimary ? FontWeight.w700 : FontWeight.w600,
-            letterSpacing: isPrimary ? 1.0 : 0.5,
-          ),
-        ),
       ),
     );
   }

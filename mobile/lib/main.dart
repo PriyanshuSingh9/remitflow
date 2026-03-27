@@ -4,6 +4,7 @@ import 'theme/app_theme.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
 import 'services/auth_service.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -11,11 +12,12 @@ void main() async {
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.dark,
-      systemNavigationBarColor: AppTheme.surfaceContainerLowest, // Match Login and Home bottom backgrounds
+      systemNavigationBarColor: AppTheme.surfaceContainerLowest,
       systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );
 
+  await Firebase.initializeApp();
   await AuthService().init();
 
   runApp(const RemitFlowApp());

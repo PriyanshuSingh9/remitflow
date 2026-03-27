@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "612184936512",
+    "project_id": "remitflow",
+    "storage_bucket": "remitflow.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:612184936512:android:3f4d5da153f92934430fa5",
+        "android_client_info": {
+          "package_name": "com.example.remitflow"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "612184936512-2tajg21te10vj21bb7hdn2lkecq4egnk.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.remitflow",
+            "certificate_hash": "c9e2445b9958d76369f281bc993bd05025b1415a"
+          }
+        },
+        {
+          "client_id": "612184936512-j4tl40a3lmd793k0cirue0t2lca8660k.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDcMCWrCIR7hJ4S8b-2iTzpj0gNk70o51o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "612184936512-j4tl40a3lmd793k0cirue0t2lca8660k.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

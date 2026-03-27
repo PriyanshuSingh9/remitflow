@@ -1,18 +1,18 @@
 # RemitFlow — Product Requirements Document
-> Version 1.0 | Cross-Border Remittance on Shardeum | HackCraft 3.0
+> Version 1.1 | Cross-Border Remittance on Polygon | HackCraft 3.0
 
 ## 1. Tech Stack
 
 | Layer | Technology | Notes |
 |---|---|---|
 | Mobile App | Flutter (Dart) 
-| Blockchain | Shardeum Sphinx Testnet | EVM-compatible, near-zero gas |
+| Blockchain | Polygon Amoy Testnet | EVM-compatible, near-zero gas |
 | Smart Contract | Solidity 
 | Wallet Abstraction | Firebase Auth + Deterministic Local Key | Google login, HMAC-SHA256 local key, no seed phrases |
-| Blockchain SDK | web3dart (Flutter package) | Talks to Shardeum RPC |
+| Blockchain SDK | web3dart (Flutter package) | Talks to Polygon RPC |
 | On-Ramp | Transak API | USD → USDC via WebView widget |
 | Off-Ramp | OnMeta API | USDC → INR to bank/UPI |
-| DEX / Liquidity | Shardeum native AMM DEX | No own liquidity pool — use DEX |
+| DEX / Liquidity | Polygon native AMM DEX (QuickSwap) | No own liquidity pool — use DEX |
 | Database | Firebase Firestore | Transaction history, user profiles |
 
 ---
@@ -23,12 +23,12 @@
 Step 1 — User A opens app, enters amount ($1000) and receiver details
 Step 2 — App shows live preview: USDC equivalent, INR receiver gets, fee breakdown
 Step 3 — User A confirms → Transak WebView opens inside app
-Step 4 — Transak converts USD → USDC, deposits to User A's deterministic local wallet on Shardeum
+Step 4 — Transak converts USD → USDC, deposits to User A's deterministic local wallet on Polygon
 Step 5 — RemitFlow smart contract receives USDC from User A wallet
-Step 6 — Smart contract routes USDC through Shardeum DEX to User B wallet
+Step 6 — Smart contract routes USDC through Polygon DEX to User B wallet
 Step 7 — OnMeta detects USDC in User B wallet, converts USDC → INR
 Step 8 — INR credited to User B's bank account or UPI (instant via UPI)
-Step 9 — Both users get push notification. Tx hash visible on Shardeum Explorer.
+Step 9 — Both users get push notification. Tx hash visible on Polygon Scan Explorer.
 ```
 
 ---
@@ -37,7 +37,7 @@ Step 9 — Both users get push notification. Tx hash visible on Shardeum Explore
 
 ### What It Does
 - Receives USDC from sender's local wallet
-- Routes through Shardeum DEX AMM
+- Routes through Polygon DEX AMM (QuickSwap)
 - Transfers USDC to receiver's wallet
 - Emits a `Transfer` event (sender, receiver, amount, timestamp)
 - Reverts if sender balance is insufficient
@@ -46,8 +46,8 @@ Step 9 — Both users get push notification. Tx hash visible on Shardeum Explore
 ### Deployment
 - Written in Solidity 0.8.x
 - Deployed via Foundry (Forge)
-- Network: Shardeum Sphinx Testnet
-- Foundry uses Shardeum RPC for deployment scripts and verification
+- Network: Polygon Amoy Testnet
+- Foundry uses Polygon RPC for deployment scripts and verification
 - ABI and contract address stored in Firestore or accessed locally, referenced in Flutter app
 
 ### Events to Emit
@@ -73,7 +73,7 @@ Build the following screens in order:
 
 ### Screen 2: Login
 - Google Sign-In using `google_sign_in` linked with Firebase Auth
-- On success: App generates a deterministic Shardeum wallet privately and seamlessly using HMAC-SHA256 from the Firebase UID
+- On success: App generates a deterministic Polygon wallet privately and seamlessly using HMAC-SHA256 from the Firebase UID
 - Wallet address synced to Firestore, encrypted private key saved sequentially in `flutter_secure_storage`
 - No seed phrases, no MetaMask, no crypto jargon
 
@@ -94,7 +94,7 @@ Build the following screens in order:
 - Amount input: USD field (auto-converts and shows INR equivalent live)
 - Fee breakdown card:
   - On-ramp fee: X%
-  - Shardeum gas: <$0.01
+  - Polygon gas: <$0.01
   - Off-ramp fee: X%
   - Total fee: $X
   - Receiver gets: ₹XX,XXX
@@ -104,16 +104,16 @@ Build the following screens in order:
 ### Screen 6: On-Ramp WebView (Transak)
 - Opens as a bottom sheet or full screen
 - Embeds Transak widget via `webview_flutter`
-- Pre-filled: USD amount, USDC as target crypto, Shardeum network, User A wallet address
+- Pre-filled: USD amount, USDC as target crypto, Polygon network, User A wallet address
 - On completion: WebView dismisses, app moves to Transfer Progress screen
 
 ### Screen 7: Transfer Progress
 - Real-time status tracker with 4 steps:
   1. On-Ramp — USDC purchased (check mark when Transak confirms)
-  2. On-Chain Settlement — smart contract routing (check mark when tx confirmed on Shardeum)
+  2. On-Chain Settlement — smart contract routing (check mark when tx confirmed on Polygon)
   3. Off-Ramp — INR conversion in progress (check mark when OnMeta confirms)
   4. Credited — INR in User B's account
-- Show Shardeum Explorer link as soon as tx hash is available
+- Show PolygonScan Explorer link as soon as tx hash is available
 - Estimated time countdown
 
 ### Screen 8: Transaction Detail
@@ -124,7 +124,7 @@ Build the following screens in order:
   - Total fees
   - Timestamp
   - Status badge
-  - "View on Shardeum Explorer" button (opens tx hash URL)
+  - "View on PolygonScan" button (opens tx hash URL)
 
 ### Screen 9: Transaction History
 - Scrollable list of all transfers
@@ -150,7 +150,7 @@ Build the following screens in order:
 - Integration: `webview_flutter` package embeds the Transak hosted widget
 - Config params to pass:
   - `apiKey`: your Transak API key
-  - `network`: `shardeum`
+  - `network`: `polygon`
   - `cryptoCurrencyCode`: `USDC`
   - `walletAddress`: User A's derived local wallet address
   - `fiatAmount`: amount user entered
@@ -160,7 +160,7 @@ Build the following screens in order:
 
 ### 6.2 OnMeta (Off-Ramp)
 - Integration: REST API called from Flutter/backend when smart contract Transfer event fires
-- Trigger: listen for Transfer event on Shardeum using `web3dart` event subscription
+- Trigger: listen for Transfer event on Polygon using `web3dart` event subscription
 - API call: POST to OnMeta off-ramp endpoint with:
   - USDC amount received
   - User B's bank account or UPI handle
@@ -214,19 +214,19 @@ Build the following screens in order:
 
 ---
 
-## 8. Shardeum Configuration
+## 8. Polygon Configuration
 
-### RPC Details (Sphinx Testnet)
+### RPC Details (Amoy Testnet)
 ```
-Network Name:   Shardeum Sphinx
-RPC URL:        https://sphinx.shardeum.org/
-Chain ID:       8082
-Symbol:         USDC
-Explorer:       https://explorer-sphinx.shardeum.org/
+Network Name:   Polygon Amoy Testnet
+RPC URL:        https://rpc-amoy.polygon.technology/
+Chain ID:       80002
+Symbol:         POL
+Explorer:       https://amoy.polygonscan.com/
 ```
 
 ### web3dart Connection
-- Connect Flutter app to Shardeum RPC using `Web3Client`
+- Connect Flutter app to Polygon RPC using `Web3Client`
 - Use user's locally derived private key to safely sign EVM transactions locally
 - Subscribe to Transfer events from the smart contract address
 
@@ -238,7 +238,7 @@ Explorer:       https://explorer-sphinx.shardeum.org/
 | Event | Who gets notified | Message |
 |---|---|---|
 | On-ramp complete | Sender | "USDC purchased. Transfer in progress." |
-| On-chain confirmed | Sender | "Transfer confirmed on Shardeum. Tx: 0x..." |
+| On-chain confirmed | Sender | "Transfer confirmed on Polygon. Tx: 0x..." |
 | Off-ramp complete | Receiver | "You received ₹XX,XXX from [Sender Name]" |
 | Transfer failed | Sender | "Transfer failed. Funds returned to your wallet." |
 
@@ -259,7 +259,7 @@ What to show judges (in order):
 4. Show live fee breakdown and INR preview
 5. Confirm → Transak widget opens → complete test purchase on testnet
 6. Show Transfer Progress screen updating in real-time
-7. Open Shardeum Explorer on browser — show the actual on-chain transaction
+7. Open PolygonScan Amoy Explorer on browser — show the actual on-chain transaction
 8. Show User B's wallet balance updated in the app
 9. INR off-ramp: show OnMeta sandbox confirmation (or mock screen)
 10. Both users receive push notifications
@@ -269,8 +269,8 @@ What to show judges (in order):
 |---|---|
 | Google login + Native deterministic wallet | Real |
 | Transak on-ramp widget | Real (testnet) |
-| USDC on Shardeum testnet | Real — verifiable on Explorer |
-| Smart contract routing | Real — verifiable on Explorer |
+| USDC on Polygon Amoy testnet | Real — verifiable on PolygonScan |
+| Smart contract routing | Real — verifiable on PolygonScan |
 | User B wallet balance update | Real on-chain |
 | INR off-ramp via OnMeta | Sandbox / mocked for demo |
 | Push notifications | Real via FCM |
@@ -281,16 +281,16 @@ What to show judges (in order):
 
 Build in this exact order to avoid blockers:
 
-1. **Smart Contract** — Write and deploy on Shardeum Sphinx via Foundry. Get ABI + address.
+1. **Smart Contract** — Write and deploy on Polygon Amoy via Foundry. Get ABI + address.
 2. **Flutter Init** — Create Flutter project. Add all dependencies to `pubspec.yaml`.
 3. **Firebase Auth & Wallet** — Integrate Google Sign In & HMAC-SHA256 deterministic key generation. Store secure keys and push user to Firestore.
-4. **web3dart** — Connect to Shardeum RPC. Read generated wallet USDC balance. Call contract.
+4. **web3dart** — Connect to Polygon RPC. Read generated wallet USDC balance. Call contract.
 5. **Transak WebView** — Embed widget. Test USD → USDC on testnet.
 6. **OnMeta** — Integrate off-ramp API. Test in sandbox.
 7. **Firestore Database** — Store and sync transaction history.
 8. **All Screens** — Build UI in order from Section 5.
 9. **FCM Notifications** — Add Firebase Messaging, wire up triggers.
-10. **End-to-End Test** — Full flow on Shardeum testnet. Confirm Explorer shows tx.
+10. **End-to-End Test** — Full flow on Polygon Amoy testnet. Confirm PolygonScan shows tx.
 
 ---
 
@@ -312,7 +312,7 @@ dependencies:
   http: latest
   flutter_dotenv: latest    # API keys from .env
   qr_flutter: latest        # QR code for receive screen
-  url_launcher: latest      # Shardeum Explorer links
+  url_launcher: latest      # PolygonScan Explorer links
 ```
 
 ---
@@ -322,8 +322,8 @@ dependencies:
 Store all secrets in a `.env` file (never commit to git):
 
 ```
-SHARDEUM_RPC_URL=https://sphinx.shardeum.org/
-SHARDEUM_CHAIN_ID=8082
+POLYGON_RPC_URL=https://rpc-amoy.polygon.technology/
+POLYGON_CHAIN_ID=80002
 CONTRACT_ADDRESS=<deployed contract address from Forge>
 CONTRACT_ABI=<ABI JSON string>
 TRANSAK_API_KEY=<your Transak API key>
@@ -347,8 +347,8 @@ ONMETA_API_KEY=<your OnMeta API key>
 
 ## 15. Key Constraints
 
-- **Shardeum only** — no other blockchain. All on-chain activity on Shardeum Sphinx Testnet.
-- **No own liquidity pool** — route through Shardeum DEX. RemitFlow holds zero USDC.
+- **Polygon only** — no other blockchain. All on-chain activity on Polygon Amoy Testnet.
+- **No own liquidity pool** — route through Polygon DEX (QuickSwap). RemitFlow holds zero USDC.
 - **Foundry for Smart Contracts** — No Remix IDE or Hardhat.
 - **Firebase Auth & Firestore** — Used for all backend, authentication, and database actions.
 - **Firebase + Deterministic Wallet** — Used instead of MetaMask or any external Web3-focused providers to retain full seamless abstraction.

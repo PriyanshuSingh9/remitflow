@@ -1,66 +1,35 @@
-## Foundry
+# RemitFlow Smart Contracts
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+Minimal Foundry workspace for the RemitFlow transfer contract.
 
-Foundry consists of:
+## Layout
+- `src/RemitFlow.sol`: main transfer contract
+- `src/mocks/MockUSDC.sol`: local ERC-20 mock for tests
+- `test/RemitFlow.t.sol`: unit tests
+- `script/DeployRemitFlow.s.sol`: deployment script
 
-- **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
-- **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
-- **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
-- **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+## Requirements
+- Foundry installed
+- `SHARDEUM_RPC_URL` in `.env` for Shardeum deployment
+- `USDC_ADDRESS` and `PRIVATE_KEY` for broadcasting deployment
 
-## Documentation
-
-https://book.getfoundry.sh/
-
-## Usage
-
-### Build
+## Common commands
 
 ```shell
-$ forge build
+forge build
+forge test
+forge fmt
+forge snapshot
 ```
 
-### Test
+## Deploy
 
 ```shell
-$ forge test
+forge script script/DeployRemitFlow.s.sol:DeployRemitFlow --rpc-url $SHARDEUM_RPC_URL --broadcast --private-key $PRIVATE_KEY
 ```
 
-### Format
+## Notes
+- The setup uses no nested repos or vendored Solidity dependencies.
+- Tests use a local cheatcode interface, so the workspace stays self-contained.
+- The contract emits the PRD event shape and moves USDC with `transferFrom`.
 
-```shell
-$ forge fmt
-```
-
-### Gas Snapshots
-
-```shell
-$ forge snapshot
-```
-
-### Anvil
-
-```shell
-$ anvil
-```
-
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
-```

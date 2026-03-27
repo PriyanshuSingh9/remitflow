@@ -50,6 +50,15 @@ RemitFlow is a decentralized remittance application built for HackCraft 3.0, ena
 
 ---
 
+## 🚀 Deployed Contract (Amoy Testnet)
+
+The RemitFlow smart contract is live on Polygon Amoy Testnet:
+
+- **Contract Address**: [`0x097f02f96ccb4B7E95bbD8824f0d7f8619672862`](https://amoy.polygonscan.com/address/0x097f02f96ccb4b7e95bbd8824f0d7f8619672862)
+- **Network**: Polygon Amoy (Chain ID: 80002)
+
+---
+
 ## 🏗️ Getting Started
 
 ### Prerequisites

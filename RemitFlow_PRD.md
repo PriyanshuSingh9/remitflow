@@ -8,12 +8,12 @@
 | Mobile App | Flutter (Dart) 
 | Blockchain | Shardeum Sphinx Testnet | EVM-compatible, near-zero gas |
 | Smart Contract | Solidity 
-| Wallet Abstraction | Web3Auth Flutter SDK | Email/Google login, no seed phrases |
+| Wallet Abstraction | Firebase Auth + Deterministic Local Key | Google login, HMAC-SHA256 local key, no seed phrases |
 | Blockchain SDK | web3dart (Flutter package) | Talks to Shardeum RPC |
 | On-Ramp | Transak API | USD → USDC via WebView widget |
 | Off-Ramp | OnMeta API | USDC → INR to bank/UPI |
 | DEX / Liquidity | Shardeum native AMM DEX | No own liquidity pool — use DEX |
-| Database | Neon (Serverless Postgres) | Transaction history, user profiles |
+| Database | Firebase Firestore | Transaction history, user profiles |
 
 ---
 
@@ -23,7 +23,7 @@
 Step 1 — User A opens app, enters amount ($1000) and receiver details
 Step 2 — App shows live preview: USDC equivalent, INR receiver gets, fee breakdown
 Step 3 — User A confirms → Transak WebView opens inside app
-Step 4 — Transak converts USD → USDC, deposits to User A's Web3Auth wallet on Shardeum
+Step 4 — Transak converts USD → USDC, deposits to User A's deterministic local wallet on Shardeum
 Step 5 — RemitFlow smart contract receives USDC from User A wallet
 Step 6 — Smart contract routes USDC through Shardeum DEX to User B wallet
 Step 7 — OnMeta detects USDC in User B wallet, converts USDC → INR
@@ -36,9 +36,9 @@ Step 9 — Both users get push notification. Tx hash visible on Shardeum Explore
 ## 4. Smart Contract Specification
 
 ### What It Does
-- Receives USDC from sender's Web3Auth wallet
+- Receives USDC from sender's local wallet
 - Routes through Shardeum DEX AMM
-- Transfers USDC to receiver's Web3Auth wallet
+- Transfers USDC to receiver's wallet
 - Emits a `Transfer` event (sender, receiver, amount, timestamp)
 - Reverts if sender balance is insufficient
 - Non-custodial: never holds funds beyond execution
@@ -48,7 +48,7 @@ Step 9 — Both users get push notification. Tx hash visible on Shardeum Explore
 - Deployed via Foundry (Forge)
 - Network: Shardeum Sphinx Testnet
 - Foundry uses Shardeum RPC for deployment scripts and verification
-- ABI and contract address stored in Neon DB, referenced in Flutter app
+- ABI and contract address stored in Firestore or accessed locally, referenced in Flutter app
 
 ### Events to Emit
 ```
@@ -72,16 +72,16 @@ Build the following screens in order:
 - Single CTA button: "Get Started"
 
 ### Screen 2: Login
-- Web3Auth Flutter SDK integration
-- Options: Continue with Google, Continue with Email
-- On success: Web3Auth generates a Shardeum wallet address silently
+- Google Sign-In using `google_sign_in` linked with Firebase Auth
+- On success: App generates a deterministic Shardeum wallet privately and seamlessly using HMAC-SHA256 from the Firebase UID
+- Wallet address synced to Firestore, encrypted private key saved sequentially in `flutter_secure_storage`
 - No seed phrases, no MetaMask, no crypto jargon
 
 ### Screen 3: KYC / Bank Linking
 - Country selector (determines currency and off-ramp)
 - Bank account number + IFSC (India) or routing number (USA)
 - UPI handle input (India receivers)
-- All stored encrypted in Neon DB
+- All stored securely in Firestore user document
 
 ### Screen 4: Home Dashboard
 - Top: User's display name + country flag
@@ -90,7 +90,7 @@ Build the following screens in order:
 - Bottom: Recent transactions list (last 5)
 
 ### Screen 5: Send Money
-- Recipient search: by email or phone number (looks up Neon DB)
+- Recipient search: by email or phone number (looks up Firestore database)
 - Amount input: USD field (auto-converts and shows INR equivalent live)
 - Fee breakdown card:
   - On-ramp fee: X%
@@ -152,7 +152,7 @@ Build the following screens in order:
   - `apiKey`: your Transak API key
   - `network`: `shardeum`
   - `cryptoCurrencyCode`: `USDC`
-  - `walletAddress`: User A's Web3Auth wallet address
+  - `walletAddress`: User A's derived local wallet address
   - `fiatAmount`: amount user entered
   - `fiatCurrency`: `USD`
 - Listen for Transak's `TRANSAK_ORDER_SUCCESSFUL` event via JavaScript bridge
@@ -168,40 +168,48 @@ Build the following screens in order:
 - OnMeta handles conversion and bank credit
 - Use OnMeta sandbox for hackathon demo
 
-### 6.3 Web3Auth
-- Package: `web3auth_flutter`
-- Init with Shardeum chain config (chain ID, RPC URL)
-- Login methods: Google, Email passwordless
-- After login: retrieve the user's Shardeum wallet address and private key (stored securely in device)
-- Use the private key to sign transactions via `web3dart`
+### 6.3 Firebase Auth + Local Deterministic Wallet
+- Package: `firebase_auth`, `google_sign_in`, `crypto`, `flutter_secure_storage`
+- Init with Firebase Google Sign-In config.
+- After login: Firebase provides a `uid`. The app hashes this `uid` with HMAC-SHA256 to generate a 256-bit wallet private key.
+- Private key is stored securely in `flutter_secure_storage`.
+- The derived EVM wallet address and user profile metadata are pushed to Firestore `users` collection.
+- Use the local private key directly to sign transactions via `web3dart`.
 
 ---
 
-## 7. Neon Database Schema
+## 7. Firestore Database Schema
 
-### Table: users
-```
-id              UUID PRIMARY KEY DEFAULT gen_random_uuid()
-email           TEXT NOT NULL UNIQUE
-wallet_address  TEXT NOT NULL UNIQUE  -- Shardeum address from Web3Auth
-country         TEXT NOT NULL         -- 'IN' or 'US' etc
-bank_details    TEXT                  -- encrypted JSON: account no, IFSC or UPI
-created_at      TIMESTAMPTZ DEFAULT now()
+### Collection: `users`
+**Document ID:** `uid` (Firebase UID)
+```json
+{
+  "email": "user@gmail.com",
+  "name": "Jane Doe",
+  "photoUrl": "https://...",
+  "walletAddress": "0xABC123...",
+  "country": "IN",
+  "bank_details": "{... encrypted JSON ...}",
+  "createdAt": "2026-03-27T10:00:00Z",
+  "lastLogin": "timestamp"
+}
 ```
 
-### Table: transactions
-```
-id              UUID PRIMARY KEY DEFAULT gen_random_uuid()
-sender_id       UUID REFERENCES users(id)
-receiver_id     UUID REFERENCES users(id)
-amount_usd      NUMERIC(12,2)         -- USD amount User A sent
-amount_usdc     NUMERIC(18,8)         -- USDC amount on-chain
-amount_inr      NUMERIC(12,2)         -- INR amount User B received
-fee_usd         NUMERIC(8,2)          -- total fee in USD
-tx_hash         TEXT                  -- Shardeum on-chain tx hash
-status          TEXT DEFAULT 'pending' -- pending | on_chain | off_ramp | completed | failed
-created_at      TIMESTAMPTZ DEFAULT now()
-completed_at    TIMESTAMPTZ
+### Collection: `transactions`
+**Document ID:** auto-generated
+```json
+{
+  "sender_id": "uidA",
+  "receiver_id": "uidB",
+  "amount_usd": 1000.00,
+  "amount_usdc": 995.50,
+  "amount_inr": 82000.00,
+  "fee_usd": 4.50,
+  "tx_hash": "0x444...",
+  "status": "pending", // pending | on_chain | off_ramp | completed | failed
+  "created_at": "timestamp",
+  "completed_at": "timestamp"
+}
 ```
 
 ---
@@ -219,7 +227,7 @@ Explorer:       https://explorer-sphinx.shardeum.org/
 
 ### web3dart Connection
 - Connect Flutter app to Shardeum RPC using `Web3Client`
-- Use user's Web3Auth private key to sign transactions
+- Use user's locally derived private key to safely sign EVM transactions locally
 - Subscribe to Transfer events from the smart contract address
 
 ---
@@ -236,8 +244,8 @@ Explorer:       https://explorer-sphinx.shardeum.org/
 
 ### Setup
 - Add `firebase_messaging` Flutter package
-- Store FCM token in Neon users table
-- Trigger notifications from server-side when smart contract events fire
+- Store FCM token in Firestore `users` document
+- Trigger notifications when Firestore `transactions` status is updated via Cloud Functions or server-side listener
 
 ---
 
@@ -246,7 +254,7 @@ Explorer:       https://explorer-sphinx.shardeum.org/
 What to show judges (in order):
 
 1. Open RemitFlow app on Android device
-2. Log in with Google → Web3Auth creates wallet silently
+2. Log in with Google → Custom Auth generates EVM wallet silently on local device
 3. Go to Send Money → enter $1000, select receiver
 4. Show live fee breakdown and INR preview
 5. Confirm → Transak widget opens → complete test purchase on testnet
@@ -259,7 +267,7 @@ What to show judges (in order):
 ### What is Real vs Mocked
 | Step | Status |
 |---|---|
-| Google login via Web3Auth | Real |
+| Google login + Native deterministic wallet | Real |
 | Transak on-ramp widget | Real (testnet) |
 | USDC on Shardeum testnet | Real — verifiable on Explorer |
 | Smart contract routing | Real — verifiable on Explorer |
@@ -275,13 +283,13 @@ Build in this exact order to avoid blockers:
 
 1. **Smart Contract** — Write and deploy on Shardeum Sphinx via Foundry. Get ABI + address.
 2. **Flutter Init** — Create Flutter project. Add all dependencies to `pubspec.yaml`.
-3. **Web3Auth** — Integrate login. Confirm wallet address is generated on login.
-4. **web3dart** — Connect to Shardeum RPC. Read wallet USDC balance. Call contract.
+3. **Firebase Auth & Wallet** — Integrate Google Sign In & HMAC-SHA256 deterministic key generation. Store secure keys and push user to Firestore.
+4. **web3dart** — Connect to Shardeum RPC. Read generated wallet USDC balance. Call contract.
 5. **Transak WebView** — Embed widget. Test USD → USDC on testnet.
 6. **OnMeta** — Integrate off-ramp API. Test in sandbox.
-7. **Neon DB** — Set up schema. Wire up user creation and transaction logging.
+7. **Firestore Database** — Store and sync transaction history.
 8. **All Screens** — Build UI in order from Section 5.
-9. **FCM Notifications** — Add Firebase, wire up triggers.
+9. **FCM Notifications** — Add Firebase Messaging, wire up triggers.
 10. **End-to-End Test** — Full flow on Shardeum testnet. Confirm Explorer shows tx.
 
 ---
@@ -292,13 +300,16 @@ Build in this exact order to avoid blockers:
 dependencies:
   flutter:
     sdk: flutter
-  web3auth_flutter: latest
+  google_sign_in: latest
+  firebase_core: latest
+  firebase_auth: latest
+  cloud_firestore: latest
+  flutter_secure_storage: latest
+  crypto: latest
   web3dart: latest
   webview_flutter: latest
-  firebase_core: latest
   firebase_messaging: latest
   http: latest
-  postgres: latest          # Neon connection
   flutter_dotenv: latest    # API keys from .env
   qr_flutter: latest        # QR code for receive screen
   url_launcher: latest      # Shardeum Explorer links
@@ -317,10 +328,8 @@ CONTRACT_ADDRESS=<deployed contract address from Forge>
 CONTRACT_ABI=<ABI JSON string>
 TRANSAK_API_KEY=<your Transak API key>
 ONMETA_API_KEY=<your OnMeta API key>
-WEB3AUTH_CLIENT_ID=<your Web3Auth client ID>
-NEON_DATABASE_URL=<your Neon connection string>
-FIREBASE_PROJECT_ID=<your Firebase project ID>
 ```
+*(Firebase configuration handles itself through google-services.json natively)*
 
 ---
 
@@ -341,6 +350,6 @@ FIREBASE_PROJECT_ID=<your Firebase project ID>
 - **Shardeum only** — no other blockchain. All on-chain activity on Shardeum Sphinx Testnet.
 - **No own liquidity pool** — route through Shardeum DEX. RemitFlow holds zero USDC.
 - **Foundry for Smart Contracts** — No Remix IDE or Hardhat.
-- **No Supabase** — Neon for database.
-- **No MetaMask for users** — Web3Auth only. Fully abstracted.
+- **Firebase Auth & Firestore** — Used for all backend, authentication, and database actions.
+- **Firebase + Deterministic Wallet** — Used instead of MetaMask or any external Web3-focused providers to retain full seamless abstraction.
 - **Flutter only** — no Next.js or web frontend.

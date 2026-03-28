@@ -34,17 +34,17 @@ class HomeScreen extends StatelessWidget {
                   // ── Header / Greeting ─────────────────────────
                   const _GreetingSection(),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 4),
 
                   // ── Balance Hero with Gradient Mesh ───────────
                   const _BalanceHeroWithMesh(),
 
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 20),
 
                   // ── Exchange Rate Ticker ──────────────────────
                   const _ExchangeRateTicker(),
 
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 20),
 
                   // ── Recent Transactions ───────────────────────
                   const _RecentTransactions(),
@@ -98,7 +98,7 @@ class _GrainPainter extends CustomPainter {
 }
 
 // ═══════════════════════════════════════════════════════════════════════
-// GREETING SECTION — Centered "Hello [avatar] Martin" (matching ref)
+// GREETING SECTION — "Hello [avatar] FirstName" with real user photo
 // ═══════════════════════════════════════════════════════════════════════
 
 class _GreetingSection extends StatelessWidget {
@@ -106,46 +106,73 @@ class _GreetingSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fullName = AuthService().userName ?? 'Martin';
-    final firstName = fullName.split(' ').first;
+    return ListenableBuilder(
+      listenable: AuthService(),
+      builder: (context, _) {
+        final auth = AuthService();
+        final fullName = auth.userName ?? 'User';
+        final firstName = fullName.split(' ').first;
+        final photoUrl = auth.userPhoto;
 
-    return Center(
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'Hello',
-            style: GoogleFonts.newsreader(
-              fontSize: 18,
-              fontWeight: FontWeight.w400,
-              color: AppTheme.onSurface,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: AppTheme.surfaceContainer,
-              image: const DecorationImage(
-                image: NetworkImage(
-                  'https://lh3.googleusercontent.com/aida/ADBb0ujZGxMKC7TXq8QflzraSuQTWFLlyOLkQsAQUdLdj6ZO-jjPmYWIolHGsznK9TjNzSDK4LXLx9LVTstYQvz_G6QymVFo9bx5YERLXNGz7p6GzSq9hta17pQMx6wAHUbl1oVxl3x6eWDEd3HrRxOyxr1TrltWrqD_eD2Rj3NGrCkXKcaDb_jgBRbDR3lCwZHzuWtqEniZPrEbR13mDiGuuHLmLrSj9UR_fH7B5KS-Ie5Pa12C_kWrkU76gmKad78CxVa7wikXvIt0Bw',
+        return Center(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Hello',
+                style: GoogleFonts.newsreader(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w400,
+                  color: AppTheme.onSurface,
                 ),
-                fit: BoxFit.cover,
               ),
-            ),
+              const SizedBox(width: 8),
+              _buildAvatar(photoUrl, firstName),
+              const SizedBox(width: 8),
+              Text(
+                firstName,
+                style: GoogleFonts.newsreader(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w400,
+                  color: AppTheme.onSurface,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 8),
-          Text(
-            firstName,
-            style: GoogleFonts.newsreader(
-              fontSize: 18,
-              fontWeight: FontWeight.w400,
-              color: AppTheme.onSurface,
-            ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAvatar(String? photoUrl, String firstName) {
+    final initials = firstName.isNotEmpty ? firstName[0].toUpperCase() : 'U';
+    return ClipOval(
+      child: (photoUrl != null && photoUrl.isNotEmpty)
+          ? Image.network(
+              photoUrl,
+              width: 32,
+              height: 32,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => _initialsAvatar(initials),
+            )
+          : _initialsAvatar(initials),
+    );
+  }
+
+  Widget _initialsAvatar(String initial) {
+    return Container(
+      width: 32,
+      height: 32,
+      color: AppTheme.surfaceContainer,
+      child: Center(
+        child: Text(
+          initial,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: AppTheme.onSurfaceVariant,
           ),
-        ],
+        ),
       ),
     );
   }
@@ -163,8 +190,31 @@ class _BalanceHeroWithMesh extends StatefulWidget {
 }
 
 class _BalanceHeroWithMeshState extends State<_BalanceHeroWithMesh> {
+  // The demo transfer amount used for the savings comparison.
   double _balance = 2450.00;
   bool _isLoading = true;
+
+  // ── SWIFT Competitor Fee Model (industry-standard rates) ─────────
+  // Outgoing international wire fee charged by the sending bank.
+  static const double _swiftFlatFeeUsd = 25.0;
+  // Hidden correspondent/intermediary bank cut (often not disclosed).
+  static const double _swiftCorrespondentFeeUsd = 10.0;
+  // FX markup banks add on top of the mid-market rate (typically 1–3%).
+  static const double _swiftFxMarkupFrac = 0.015;
+
+  // ── RemitFlow Fee Model ───────────────────────────────────────────
+  // We charge a flat 0.2% service fee and always use the mid-market rate.
+  static const double _remitflowFeeFrac = 0.002;
+
+  /// How much MORE money the receiver gets using RemitFlow vs SWIFT,
+  /// for the same send amount. Derived deterministically from fee models above.
+  static double _computeSavingsVsSwift(double sendAmountUsd) {
+    final remitflowReceived = sendAmountUsd * (1 - _remitflowFeeFrac);
+    final swiftReceived = sendAmountUsd * (1 - _swiftFxMarkupFrac)
+        - _swiftFlatFeeUsd
+        - _swiftCorrespondentFeeUsd;
+    return (remitflowReceived - swiftReceived).clamp(0.0, double.infinity);
+  }
 
   @override
   void initState() {
@@ -184,10 +234,10 @@ class _BalanceHeroWithMeshState extends State<_BalanceHeroWithMesh> {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    
-    // Calculate simulated savings based on transfer amount
-    final savings = _balance * 0.023; // 2.3% saved
-    
+
+    // Savings = RemitFlow received − SWIFT received (same send amount).
+    final savings = _computeSavingsVsSwift(_balance);
+
     // Format amounts
     final balanceStr = '\$ ${_balance.toStringAsFixed(2).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}';
     final savingsStr = '\$${savings.toStringAsFixed(2)}';
@@ -364,7 +414,7 @@ class _MeshBlobPainter extends CustomPainter {
 }
 
 // ═══════════════════════════════════════════════════════════════════════
-// EXCHANGE RATE TICKER — Live USD/INR rate
+// EXCHANGE RATE TICKER — Live USD/INR rate (real-time via open.er-api.com)
 // ═══════════════════════════════════════════════════════════════════════
 
 class _ExchangeRateTicker extends StatefulWidget {
@@ -377,6 +427,7 @@ class _ExchangeRateTicker extends StatefulWidget {
 class _ExchangeRateTickerState extends State<_ExchangeRateTicker> {
   double _exchangeRate = 83.42;
   bool _isLoading = true;
+  bool _isLive = false;
 
   @override
   void initState() {
@@ -390,6 +441,7 @@ class _ExchangeRateTickerState extends State<_ExchangeRateTicker> {
       setState(() {
         if (rate != null) {
           _exchangeRate = rate;
+          _isLive = true;
         }
         _isLoading = false;
       });
@@ -438,22 +490,32 @@ class _ExchangeRateTickerState extends State<_ExchangeRateTicker> {
             const SizedBox(width: 6),
             const Text('🇮🇳', style: TextStyle(fontSize: 18)),
             const SizedBox(width: 10),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-              decoration: BoxDecoration(
-                color: AppTheme.secondaryContainer,
-                borderRadius: BorderRadius.circular(9999),
+            if (!_isLoading) ...[
+              const SizedBox(width: 8),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: _isLive ? AppTheme.vaultGreen : AppTheme.onSurfaceVariant,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    _isLive ? 'LIVE' : 'CACHED',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w800,
+                      color: _isLive ? AppTheme.vaultGreen : AppTheme.onSurfaceVariant,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                ],
               ),
-              child: Text(
-                '2.3% cheaper',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.secondary,
-                  letterSpacing: 0.3,
-                ),
-              ),
-            ),
+            ],
           ],
         ),
       ),
@@ -477,7 +539,7 @@ class _RecentTransactions extends StatelessWidget {
           // Section Header
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
                 'Recent Transactions',
@@ -509,22 +571,6 @@ class _RecentTransactions extends StatelessWidget {
             subtitle: 'Mar 23, 14:30',
             amount: '-\$500.00',
             amountColor: AppTheme.onSurface,
-            secondaryAmount: '₹41,710.00',
-            flag: '🇮🇳',
-          ),
-
-          const SizedBox(height: 20),
-
-          // Transaction 2 — Received from US
-          const _TransactionItem(
-            icon: Icons.arrow_downward_rounded,
-            gradientColors: [Color(0xFF7A8FA6), Color(0xFF34495D)],
-            title: 'Received from John Davis',
-            subtitle: 'Mar 21, 09:15',
-            amount: '+\$1,200.00',
-            amountColor: AppTheme.vaultGreen,
-            secondaryAmount: '₹1,00,104.00',
-            flag: '🇺🇸',
           ),
 
           const SizedBox(height: 20),
@@ -537,8 +583,6 @@ class _RecentTransactions extends StatelessWidget {
             subtitle: 'Mar 18, 20:45',
             amount: '-\$250.00',
             amountColor: AppTheme.onSurface,
-            secondaryAmount: '₹20,855.00',
-            flag: '🇮🇳',
           ),
         ],
       ),
@@ -553,8 +597,6 @@ class _TransactionItem extends StatelessWidget {
   final String subtitle;
   final String amount;
   final Color amountColor;
-  final String secondaryAmount;
-  final String flag;
 
   const _TransactionItem({
     required this.icon,
@@ -563,8 +605,6 @@ class _TransactionItem extends StatelessWidget {
     required this.subtitle,
     required this.amount,
     required this.amountColor,
-    required this.secondaryAmount,
-    required this.flag,
   });
 
   @override
@@ -620,38 +660,14 @@ class _TransactionItem extends StatelessWidget {
           ),
         ),
 
-        // Amount + INR equivalent
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              amount,
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: amountColor,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  flag,
-                  style: const TextStyle(fontSize: 10),
-                ),
-                const SizedBox(width: 3),
-                Text(
-                  secondaryAmount,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 10,
-                    color: AppTheme.onSurfaceVariant,
-                    letterSpacing: 0.8,
-                  ),
-                ),
-              ],
-            ),
-          ],
+        // Amount (USD only)
+        Text(
+          amount,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            color: amountColor,
+          ),
         ),
       ],
     );

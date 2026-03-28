@@ -3,12 +3,16 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { OAuth2Client } from "google-auth-library";
 import jwt from "jsonwebtoken";
 import {
+  completeOnRamp,
   createTransfer,
   getCurrentUserByGoogleSubject,
   getDashboard,
+  getTransferDetail,
   searchRecipients,
   syncSessionFromGoogleIdentity
 } from "./app-service";
+import { renderWidgetHtml } from "./ramp/mock-transak";
+import { startEventListener } from "./ramp/blockchain";
 import { env } from "./env";
 
 type JsonRecord = Record<string, unknown>;
@@ -213,6 +217,42 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse) 
     return;
   }
 
+  // ─── On-Ramp: Mock Widget HTML ─────────────────────────────────
+  if (request.method === "GET" && url.pathname === "/onramp/widget") {
+    const orderId = url.searchParams.get("orderId") ?? "";
+    const amount = url.searchParams.get("amount") ?? "0";
+    const currency = url.searchParams.get("currency") ?? "USD";
+    const html = renderWidgetHtml(orderId, amount, currency);
+    response.writeHead(200, {
+      "Content-Type": "text/html; charset=utf-8",
+      "Access-Control-Allow-Origin": "*"
+    });
+    response.end(html);
+    return;
+  }
+
+  // ─── On-Ramp: Complete Purchase ────────────────────────────────
+  const onRampCompleteMatch = url.pathname.match(/^\/onramp\/complete\/(.+)$/);
+  if (request.method === "POST" && onRampCompleteMatch) {
+    const session = getCurrentSession(request);
+    await getCurrentUserByGoogleSubject(session.subject);
+    const orderId = decodeURIComponent(onRampCompleteMatch[1]);
+    const result = await completeOnRamp(orderId);
+    sendJson(response, 200, result);
+    return;
+  }
+
+  // ─── Transfer Detail / Status Polling ──────────────────────────
+  const transferDetailMatch = url.pathname.match(/^\/transfers\/([0-9a-f-]+)$/i);
+  if (request.method === "GET" && transferDetailMatch) {
+    const session = getCurrentSession(request);
+    const currentUser = await getCurrentUserByGoogleSubject(session.subject);
+    const transferId = transferDetailMatch[1];
+    const detail = await getTransferDetail(transferId, currentUser.id);
+    sendJson(response, 200, detail);
+    return;
+  }
+
   throw new HttpError(`Route not found: ${request.method} ${url.pathname}`, 404);
 }
 
@@ -233,6 +273,13 @@ const server = createServer(async (request, response) => {
     });
   }
 });
+
+// Start blockchain event listener
+try {
+  startEventListener();
+} catch (err) {
+  console.warn("[server] Could not start event listener:", err);
+}
 
 server.listen(env.port, "0.0.0.0", () => {
   console.log(`RemitFlow backend listening on http://localhost:${env.port}`);

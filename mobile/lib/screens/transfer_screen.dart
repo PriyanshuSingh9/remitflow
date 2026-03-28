@@ -279,7 +279,7 @@ class _TransferScreenState extends State<TransferScreen> {
                             child: ListView.separated(
                               scrollDirection: Axis.horizontal,
                               itemCount: recipients.length,
-                              separatorBuilder: (_, __) =>
+                              separatorBuilder: (_, _) =>
                                   const SizedBox(width: 16),
                               itemBuilder: (context, index) {
                                 final recipient = recipients[index];

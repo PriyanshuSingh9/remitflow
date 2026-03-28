@@ -386,7 +386,8 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 export const ModelName = {
   User: 'User',
   ExchangeRate: 'ExchangeRate',
-  Transaction: 'Transaction'
+  Transaction: 'Transaction',
+  RampOrder: 'RampOrder'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -402,7 +403,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "exchangeRate" | "transaction"
+    modelProps: "user" | "exchangeRate" | "transaction" | "rampOrder"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -628,6 +629,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    RampOrder: {
+      payload: Prisma.$RampOrderPayload<ExtArgs>
+      fields: Prisma.RampOrderFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.RampOrderFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RampOrderPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.RampOrderFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RampOrderPayload>
+        }
+        findFirst: {
+          args: Prisma.RampOrderFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RampOrderPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.RampOrderFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RampOrderPayload>
+        }
+        findMany: {
+          args: Prisma.RampOrderFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RampOrderPayload>[]
+        }
+        create: {
+          args: Prisma.RampOrderCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RampOrderPayload>
+        }
+        createMany: {
+          args: Prisma.RampOrderCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.RampOrderCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RampOrderPayload>[]
+        }
+        delete: {
+          args: Prisma.RampOrderDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RampOrderPayload>
+        }
+        update: {
+          args: Prisma.RampOrderUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RampOrderPayload>
+        }
+        deleteMany: {
+          args: Prisma.RampOrderDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.RampOrderUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.RampOrderUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RampOrderPayload>[]
+        }
+        upsert: {
+          args: Prisma.RampOrderUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$RampOrderPayload>
+        }
+        aggregate: {
+          args: Prisma.RampOrderAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateRampOrder>
+        }
+        groupBy: {
+          args: Prisma.RampOrderGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RampOrderGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.RampOrderCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.RampOrderCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -711,10 +786,37 @@ export const TransactionScalarFieldEnum = {
   txHash: 'txHash',
   status: 'status',
   createdAt: 'createdAt',
-  completedAt: 'completedAt'
+  completedAt: 'completedAt',
+  lockedUsdToUsdc: 'lockedUsdToUsdc',
+  lockedUsdcToInr: 'lockedUsdcToInr',
+  escrowId: 'escrowId',
+  escrowState: 'escrowState',
+  escrowTxHash: 'escrowTxHash',
+  releaseTxHash: 'releaseTxHash'
 } as const
 
 export type TransactionScalarFieldEnum = (typeof TransactionScalarFieldEnum)[keyof typeof TransactionScalarFieldEnum]
+
+
+export const RampOrderScalarFieldEnum = {
+  id: 'id',
+  type: 'type',
+  transactionId: 'transactionId',
+  externalOrderId: 'externalOrderId',
+  status: 'status',
+  fiatCurrency: 'fiatCurrency',
+  fiatAmount: 'fiatAmount',
+  cryptoCurrency: 'cryptoCurrency',
+  cryptoAmount: 'cryptoAmount',
+  walletAddress: 'walletAddress',
+  bankDetails: 'bankDetails',
+  txHash: 'txHash',
+  metadata: 'metadata',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type RampOrderScalarFieldEnum = (typeof RampOrderScalarFieldEnum)[keyof typeof RampOrderScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -816,6 +918,20 @@ export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'In
 export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
     
 
+
+/**
+ * Reference to a field of type 'Float'
+ */
+export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
+    
+
+
+/**
+ * Reference to a field of type 'Float[]'
+ */
+export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
+    
+
 /**
  * Batch Payload for updateMany & deleteMany & createMany
  */
@@ -914,6 +1030,7 @@ export type GlobalOmitConfig = {
   user?: Prisma.UserOmit
   exchangeRate?: Prisma.ExchangeRateOmit
   transaction?: Prisma.TransactionOmit
+  rampOrder?: Prisma.RampOrderOmit
 }
 
 /* Types for Logging */

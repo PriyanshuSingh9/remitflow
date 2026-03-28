@@ -11,4 +11,5 @@
 export type * from './models/User'
 export type * from './models/ExchangeRate'
 export type * from './models/Transaction'
+export type * from './models/RampOrder'
 export type * from './commonInputTypes'

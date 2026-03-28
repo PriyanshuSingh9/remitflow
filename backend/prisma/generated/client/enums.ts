@@ -11,10 +11,13 @@
 
 export const TransactionStatus = {
   pending: 'pending',
-  on_chain: 'on_chain',
-  off_ramp: 'off_ramp',
+  escrow_locked: 'escrow_locked',
+  offramp_pending: 'offramp_pending',
+  offramp_ready: 'offramp_ready',
+  escrow_released: 'escrow_released',
   completed: 'completed',
-  failed: 'failed'
+  failed: 'failed',
+  refunded: 'refunded'
 } as const
 
 export type TransactionStatus = (typeof TransactionStatus)[keyof typeof TransactionStatus]

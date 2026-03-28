@@ -31,6 +31,9 @@ export type TransactionAvgAggregateOutputType = {
   amountUsdc: runtime.Decimal | null
   amountInr: runtime.Decimal | null
   feeUsd: runtime.Decimal | null
+  lockedUsdToUsdc: runtime.Decimal | null
+  lockedUsdcToInr: runtime.Decimal | null
+  escrowId: number | null
 }
 
 export type TransactionSumAggregateOutputType = {
@@ -38,6 +41,9 @@ export type TransactionSumAggregateOutputType = {
   amountUsdc: runtime.Decimal | null
   amountInr: runtime.Decimal | null
   feeUsd: runtime.Decimal | null
+  lockedUsdToUsdc: runtime.Decimal | null
+  lockedUsdcToInr: runtime.Decimal | null
+  escrowId: number | null
 }
 
 export type TransactionMinAggregateOutputType = {
@@ -52,6 +58,12 @@ export type TransactionMinAggregateOutputType = {
   status: $Enums.TransactionStatus | null
   createdAt: Date | null
   completedAt: Date | null
+  lockedUsdToUsdc: runtime.Decimal | null
+  lockedUsdcToInr: runtime.Decimal | null
+  escrowId: number | null
+  escrowState: string | null
+  escrowTxHash: string | null
+  releaseTxHash: string | null
 }
 
 export type TransactionMaxAggregateOutputType = {
@@ -66,6 +78,12 @@ export type TransactionMaxAggregateOutputType = {
   status: $Enums.TransactionStatus | null
   createdAt: Date | null
   completedAt: Date | null
+  lockedUsdToUsdc: runtime.Decimal | null
+  lockedUsdcToInr: runtime.Decimal | null
+  escrowId: number | null
+  escrowState: string | null
+  escrowTxHash: string | null
+  releaseTxHash: string | null
 }
 
 export type TransactionCountAggregateOutputType = {
@@ -80,6 +98,12 @@ export type TransactionCountAggregateOutputType = {
   status: number
   createdAt: number
   completedAt: number
+  lockedUsdToUsdc: number
+  lockedUsdcToInr: number
+  escrowId: number
+  escrowState: number
+  escrowTxHash: number
+  releaseTxHash: number
   _all: number
 }
 
@@ -89,6 +113,9 @@ export type TransactionAvgAggregateInputType = {
   amountUsdc?: true
   amountInr?: true
   feeUsd?: true
+  lockedUsdToUsdc?: true
+  lockedUsdcToInr?: true
+  escrowId?: true
 }
 
 export type TransactionSumAggregateInputType = {
@@ -96,6 +123,9 @@ export type TransactionSumAggregateInputType = {
   amountUsdc?: true
   amountInr?: true
   feeUsd?: true
+  lockedUsdToUsdc?: true
+  lockedUsdcToInr?: true
+  escrowId?: true
 }
 
 export type TransactionMinAggregateInputType = {
@@ -110,6 +140,12 @@ export type TransactionMinAggregateInputType = {
   status?: true
   createdAt?: true
   completedAt?: true
+  lockedUsdToUsdc?: true
+  lockedUsdcToInr?: true
+  escrowId?: true
+  escrowState?: true
+  escrowTxHash?: true
+  releaseTxHash?: true
 }
 
 export type TransactionMaxAggregateInputType = {
@@ -124,6 +160,12 @@ export type TransactionMaxAggregateInputType = {
   status?: true
   createdAt?: true
   completedAt?: true
+  lockedUsdToUsdc?: true
+  lockedUsdcToInr?: true
+  escrowId?: true
+  escrowState?: true
+  escrowTxHash?: true
+  releaseTxHash?: true
 }
 
 export type TransactionCountAggregateInputType = {
@@ -138,6 +180,12 @@ export type TransactionCountAggregateInputType = {
   status?: true
   createdAt?: true
   completedAt?: true
+  lockedUsdToUsdc?: true
+  lockedUsdcToInr?: true
+  escrowId?: true
+  escrowState?: true
+  escrowTxHash?: true
+  releaseTxHash?: true
   _all?: true
 }
 
@@ -239,6 +287,12 @@ export type TransactionGroupByOutputType = {
   status: $Enums.TransactionStatus
   createdAt: Date
   completedAt: Date | null
+  lockedUsdToUsdc: runtime.Decimal | null
+  lockedUsdcToInr: runtime.Decimal | null
+  escrowId: number | null
+  escrowState: string | null
+  escrowTxHash: string | null
+  releaseTxHash: string | null
   _count: TransactionCountAggregateOutputType | null
   _avg: TransactionAvgAggregateOutputType | null
   _sum: TransactionSumAggregateOutputType | null
@@ -276,8 +330,15 @@ export type TransactionWhereInput = {
   status?: Prisma.EnumTransactionStatusFilter<"Transaction"> | $Enums.TransactionStatus
   createdAt?: Prisma.DateTimeFilter<"Transaction"> | Date | string
   completedAt?: Prisma.DateTimeNullableFilter<"Transaction"> | Date | string | null
+  lockedUsdToUsdc?: Prisma.DecimalNullableFilter<"Transaction"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  lockedUsdcToInr?: Prisma.DecimalNullableFilter<"Transaction"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  escrowId?: Prisma.IntNullableFilter<"Transaction"> | number | null
+  escrowState?: Prisma.StringNullableFilter<"Transaction"> | string | null
+  escrowTxHash?: Prisma.StringNullableFilter<"Transaction"> | string | null
+  releaseTxHash?: Prisma.StringNullableFilter<"Transaction"> | string | null
   sender?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   receiver?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
+  rampOrders?: Prisma.RampOrderListRelationFilter
 }
 
 export type TransactionOrderByWithRelationInput = {
@@ -292,13 +353,22 @@ export type TransactionOrderByWithRelationInput = {
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   completedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  lockedUsdToUsdc?: Prisma.SortOrderInput | Prisma.SortOrder
+  lockedUsdcToInr?: Prisma.SortOrderInput | Prisma.SortOrder
+  escrowId?: Prisma.SortOrderInput | Prisma.SortOrder
+  escrowState?: Prisma.SortOrderInput | Prisma.SortOrder
+  escrowTxHash?: Prisma.SortOrderInput | Prisma.SortOrder
+  releaseTxHash?: Prisma.SortOrderInput | Prisma.SortOrder
   sender?: Prisma.UserOrderByWithRelationInput
   receiver?: Prisma.UserOrderByWithRelationInput
+  rampOrders?: Prisma.RampOrderOrderByRelationAggregateInput
 }
 
 export type TransactionWhereUniqueInput = Prisma.AtLeast<{
   id?: string
   txHash?: string
+  escrowTxHash?: string
+  releaseTxHash?: string
   AND?: Prisma.TransactionWhereInput | Prisma.TransactionWhereInput[]
   OR?: Prisma.TransactionWhereInput[]
   NOT?: Prisma.TransactionWhereInput | Prisma.TransactionWhereInput[]
@@ -311,9 +381,14 @@ export type TransactionWhereUniqueInput = Prisma.AtLeast<{
   status?: Prisma.EnumTransactionStatusFilter<"Transaction"> | $Enums.TransactionStatus
   createdAt?: Prisma.DateTimeFilter<"Transaction"> | Date | string
   completedAt?: Prisma.DateTimeNullableFilter<"Transaction"> | Date | string | null
+  lockedUsdToUsdc?: Prisma.DecimalNullableFilter<"Transaction"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  lockedUsdcToInr?: Prisma.DecimalNullableFilter<"Transaction"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  escrowId?: Prisma.IntNullableFilter<"Transaction"> | number | null
+  escrowState?: Prisma.StringNullableFilter<"Transaction"> | string | null
   sender?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   receiver?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
-}, "id" | "txHash">
+  rampOrders?: Prisma.RampOrderListRelationFilter
+}, "id" | "txHash" | "escrowTxHash" | "releaseTxHash">
 
 export type TransactionOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -327,6 +402,12 @@ export type TransactionOrderByWithAggregationInput = {
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   completedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  lockedUsdToUsdc?: Prisma.SortOrderInput | Prisma.SortOrder
+  lockedUsdcToInr?: Prisma.SortOrderInput | Prisma.SortOrder
+  escrowId?: Prisma.SortOrderInput | Prisma.SortOrder
+  escrowState?: Prisma.SortOrderInput | Prisma.SortOrder
+  escrowTxHash?: Prisma.SortOrderInput | Prisma.SortOrder
+  releaseTxHash?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.TransactionCountOrderByAggregateInput
   _avg?: Prisma.TransactionAvgOrderByAggregateInput
   _max?: Prisma.TransactionMaxOrderByAggregateInput
@@ -349,6 +430,12 @@ export type TransactionScalarWhereWithAggregatesInput = {
   status?: Prisma.EnumTransactionStatusWithAggregatesFilter<"Transaction"> | $Enums.TransactionStatus
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Transaction"> | Date | string
   completedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Transaction"> | Date | string | null
+  lockedUsdToUsdc?: Prisma.DecimalNullableWithAggregatesFilter<"Transaction"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  lockedUsdcToInr?: Prisma.DecimalNullableWithAggregatesFilter<"Transaction"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  escrowId?: Prisma.IntNullableWithAggregatesFilter<"Transaction"> | number | null
+  escrowState?: Prisma.StringNullableWithAggregatesFilter<"Transaction"> | string | null
+  escrowTxHash?: Prisma.StringNullableWithAggregatesFilter<"Transaction"> | string | null
+  releaseTxHash?: Prisma.StringNullableWithAggregatesFilter<"Transaction"> | string | null
 }
 
 export type TransactionCreateInput = {
@@ -361,8 +448,15 @@ export type TransactionCreateInput = {
   status?: $Enums.TransactionStatus
   createdAt?: Date | string
   completedAt?: Date | string | null
+  lockedUsdToUsdc?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  lockedUsdcToInr?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  escrowId?: number | null
+  escrowState?: string | null
+  escrowTxHash?: string | null
+  releaseTxHash?: string | null
   sender: Prisma.UserCreateNestedOneWithoutSentTransactionsInput
   receiver: Prisma.UserCreateNestedOneWithoutReceivedTransactionsInput
+  rampOrders?: Prisma.RampOrderCreateNestedManyWithoutTransactionInput
 }
 
 export type TransactionUncheckedCreateInput = {
@@ -377,6 +471,13 @@ export type TransactionUncheckedCreateInput = {
   status?: $Enums.TransactionStatus
   createdAt?: Date | string
   completedAt?: Date | string | null
+  lockedUsdToUsdc?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  lockedUsdcToInr?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  escrowId?: number | null
+  escrowState?: string | null
+  escrowTxHash?: string | null
+  releaseTxHash?: string | null
+  rampOrders?: Prisma.RampOrderUncheckedCreateNestedManyWithoutTransactionInput
 }
 
 export type TransactionUpdateInput = {
@@ -389,8 +490,15 @@ export type TransactionUpdateInput = {
   status?: Prisma.EnumTransactionStatusFieldUpdateOperationsInput | $Enums.TransactionStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedUsdToUsdc?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  lockedUsdcToInr?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  escrowId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  escrowState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  escrowTxHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  releaseTxHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sender?: Prisma.UserUpdateOneRequiredWithoutSentTransactionsNestedInput
   receiver?: Prisma.UserUpdateOneRequiredWithoutReceivedTransactionsNestedInput
+  rampOrders?: Prisma.RampOrderUpdateManyWithoutTransactionNestedInput
 }
 
 export type TransactionUncheckedUpdateInput = {
@@ -405,6 +513,13 @@ export type TransactionUncheckedUpdateInput = {
   status?: Prisma.EnumTransactionStatusFieldUpdateOperationsInput | $Enums.TransactionStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedUsdToUsdc?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  lockedUsdcToInr?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  escrowId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  escrowState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  escrowTxHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  releaseTxHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  rampOrders?: Prisma.RampOrderUncheckedUpdateManyWithoutTransactionNestedInput
 }
 
 export type TransactionCreateManyInput = {
@@ -419,6 +534,12 @@ export type TransactionCreateManyInput = {
   status?: $Enums.TransactionStatus
   createdAt?: Date | string
   completedAt?: Date | string | null
+  lockedUsdToUsdc?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  lockedUsdcToInr?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  escrowId?: number | null
+  escrowState?: string | null
+  escrowTxHash?: string | null
+  releaseTxHash?: string | null
 }
 
 export type TransactionUpdateManyMutationInput = {
@@ -431,6 +552,12 @@ export type TransactionUpdateManyMutationInput = {
   status?: Prisma.EnumTransactionStatusFieldUpdateOperationsInput | $Enums.TransactionStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedUsdToUsdc?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  lockedUsdcToInr?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  escrowId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  escrowState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  escrowTxHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  releaseTxHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type TransactionUncheckedUpdateManyInput = {
@@ -445,6 +572,12 @@ export type TransactionUncheckedUpdateManyInput = {
   status?: Prisma.EnumTransactionStatusFieldUpdateOperationsInput | $Enums.TransactionStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedUsdToUsdc?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  lockedUsdcToInr?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  escrowId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  escrowState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  escrowTxHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  releaseTxHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type TransactionListRelationFilter = {
@@ -469,6 +602,12 @@ export type TransactionCountOrderByAggregateInput = {
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   completedAt?: Prisma.SortOrder
+  lockedUsdToUsdc?: Prisma.SortOrder
+  lockedUsdcToInr?: Prisma.SortOrder
+  escrowId?: Prisma.SortOrder
+  escrowState?: Prisma.SortOrder
+  escrowTxHash?: Prisma.SortOrder
+  releaseTxHash?: Prisma.SortOrder
 }
 
 export type TransactionAvgOrderByAggregateInput = {
@@ -476,6 +615,9 @@ export type TransactionAvgOrderByAggregateInput = {
   amountUsdc?: Prisma.SortOrder
   amountInr?: Prisma.SortOrder
   feeUsd?: Prisma.SortOrder
+  lockedUsdToUsdc?: Prisma.SortOrder
+  lockedUsdcToInr?: Prisma.SortOrder
+  escrowId?: Prisma.SortOrder
 }
 
 export type TransactionMaxOrderByAggregateInput = {
@@ -490,6 +632,12 @@ export type TransactionMaxOrderByAggregateInput = {
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   completedAt?: Prisma.SortOrder
+  lockedUsdToUsdc?: Prisma.SortOrder
+  lockedUsdcToInr?: Prisma.SortOrder
+  escrowId?: Prisma.SortOrder
+  escrowState?: Prisma.SortOrder
+  escrowTxHash?: Prisma.SortOrder
+  releaseTxHash?: Prisma.SortOrder
 }
 
 export type TransactionMinOrderByAggregateInput = {
@@ -504,6 +652,12 @@ export type TransactionMinOrderByAggregateInput = {
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   completedAt?: Prisma.SortOrder
+  lockedUsdToUsdc?: Prisma.SortOrder
+  lockedUsdcToInr?: Prisma.SortOrder
+  escrowId?: Prisma.SortOrder
+  escrowState?: Prisma.SortOrder
+  escrowTxHash?: Prisma.SortOrder
+  releaseTxHash?: Prisma.SortOrder
 }
 
 export type TransactionSumOrderByAggregateInput = {
@@ -511,6 +665,14 @@ export type TransactionSumOrderByAggregateInput = {
   amountUsdc?: Prisma.SortOrder
   amountInr?: Prisma.SortOrder
   feeUsd?: Prisma.SortOrder
+  lockedUsdToUsdc?: Prisma.SortOrder
+  lockedUsdcToInr?: Prisma.SortOrder
+  escrowId?: Prisma.SortOrder
+}
+
+export type TransactionScalarRelationFilter = {
+  is?: Prisma.TransactionWhereInput
+  isNot?: Prisma.TransactionWhereInput
 }
 
 export type TransactionCreateNestedManyWithoutSenderInput = {
@@ -605,6 +767,36 @@ export type NullableDateTimeFieldUpdateOperationsInput = {
   set?: Date | string | null
 }
 
+export type NullableDecimalFieldUpdateOperationsInput = {
+  set?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  increment?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  decrement?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  multiply?: runtime.Decimal | runtime.DecimalJsLike | number | string
+  divide?: runtime.Decimal | runtime.DecimalJsLike | number | string
+}
+
+export type NullableIntFieldUpdateOperationsInput = {
+  set?: number | null
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
+}
+
+export type TransactionCreateNestedOneWithoutRampOrdersInput = {
+  create?: Prisma.XOR<Prisma.TransactionCreateWithoutRampOrdersInput, Prisma.TransactionUncheckedCreateWithoutRampOrdersInput>
+  connectOrCreate?: Prisma.TransactionCreateOrConnectWithoutRampOrdersInput
+  connect?: Prisma.TransactionWhereUniqueInput
+}
+
+export type TransactionUpdateOneRequiredWithoutRampOrdersNestedInput = {
+  create?: Prisma.XOR<Prisma.TransactionCreateWithoutRampOrdersInput, Prisma.TransactionUncheckedCreateWithoutRampOrdersInput>
+  connectOrCreate?: Prisma.TransactionCreateOrConnectWithoutRampOrdersInput
+  upsert?: Prisma.TransactionUpsertWithoutRampOrdersInput
+  connect?: Prisma.TransactionWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.TransactionUpdateToOneWithWhereWithoutRampOrdersInput, Prisma.TransactionUpdateWithoutRampOrdersInput>, Prisma.TransactionUncheckedUpdateWithoutRampOrdersInput>
+}
+
 export type TransactionCreateWithoutSenderInput = {
   id?: string
   amountUsd: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -615,7 +807,14 @@ export type TransactionCreateWithoutSenderInput = {
   status?: $Enums.TransactionStatus
   createdAt?: Date | string
   completedAt?: Date | string | null
+  lockedUsdToUsdc?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  lockedUsdcToInr?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  escrowId?: number | null
+  escrowState?: string | null
+  escrowTxHash?: string | null
+  releaseTxHash?: string | null
   receiver: Prisma.UserCreateNestedOneWithoutReceivedTransactionsInput
+  rampOrders?: Prisma.RampOrderCreateNestedManyWithoutTransactionInput
 }
 
 export type TransactionUncheckedCreateWithoutSenderInput = {
@@ -629,6 +828,13 @@ export type TransactionUncheckedCreateWithoutSenderInput = {
   status?: $Enums.TransactionStatus
   createdAt?: Date | string
   completedAt?: Date | string | null
+  lockedUsdToUsdc?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  lockedUsdcToInr?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  escrowId?: number | null
+  escrowState?: string | null
+  escrowTxHash?: string | null
+  releaseTxHash?: string | null
+  rampOrders?: Prisma.RampOrderUncheckedCreateNestedManyWithoutTransactionInput
 }
 
 export type TransactionCreateOrConnectWithoutSenderInput = {
@@ -651,7 +857,14 @@ export type TransactionCreateWithoutReceiverInput = {
   status?: $Enums.TransactionStatus
   createdAt?: Date | string
   completedAt?: Date | string | null
+  lockedUsdToUsdc?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  lockedUsdcToInr?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  escrowId?: number | null
+  escrowState?: string | null
+  escrowTxHash?: string | null
+  releaseTxHash?: string | null
   sender: Prisma.UserCreateNestedOneWithoutSentTransactionsInput
+  rampOrders?: Prisma.RampOrderCreateNestedManyWithoutTransactionInput
 }
 
 export type TransactionUncheckedCreateWithoutReceiverInput = {
@@ -665,6 +878,13 @@ export type TransactionUncheckedCreateWithoutReceiverInput = {
   status?: $Enums.TransactionStatus
   createdAt?: Date | string
   completedAt?: Date | string | null
+  lockedUsdToUsdc?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  lockedUsdcToInr?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  escrowId?: number | null
+  escrowState?: string | null
+  escrowTxHash?: string | null
+  releaseTxHash?: string | null
+  rampOrders?: Prisma.RampOrderUncheckedCreateNestedManyWithoutTransactionInput
 }
 
 export type TransactionCreateOrConnectWithoutReceiverInput = {
@@ -708,6 +928,12 @@ export type TransactionScalarWhereInput = {
   status?: Prisma.EnumTransactionStatusFilter<"Transaction"> | $Enums.TransactionStatus
   createdAt?: Prisma.DateTimeFilter<"Transaction"> | Date | string
   completedAt?: Prisma.DateTimeNullableFilter<"Transaction"> | Date | string | null
+  lockedUsdToUsdc?: Prisma.DecimalNullableFilter<"Transaction"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  lockedUsdcToInr?: Prisma.DecimalNullableFilter<"Transaction"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  escrowId?: Prisma.IntNullableFilter<"Transaction"> | number | null
+  escrowState?: Prisma.StringNullableFilter<"Transaction"> | string | null
+  escrowTxHash?: Prisma.StringNullableFilter<"Transaction"> | string | null
+  releaseTxHash?: Prisma.StringNullableFilter<"Transaction"> | string | null
 }
 
 export type TransactionUpsertWithWhereUniqueWithoutReceiverInput = {
@@ -726,6 +952,102 @@ export type TransactionUpdateManyWithWhereWithoutReceiverInput = {
   data: Prisma.XOR<Prisma.TransactionUpdateManyMutationInput, Prisma.TransactionUncheckedUpdateManyWithoutReceiverInput>
 }
 
+export type TransactionCreateWithoutRampOrdersInput = {
+  id?: string
+  amountUsd: runtime.Decimal | runtime.DecimalJsLike | number | string
+  amountUsdc: runtime.Decimal | runtime.DecimalJsLike | number | string
+  amountInr: runtime.Decimal | runtime.DecimalJsLike | number | string
+  feeUsd: runtime.Decimal | runtime.DecimalJsLike | number | string
+  txHash?: string | null
+  status?: $Enums.TransactionStatus
+  createdAt?: Date | string
+  completedAt?: Date | string | null
+  lockedUsdToUsdc?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  lockedUsdcToInr?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  escrowId?: number | null
+  escrowState?: string | null
+  escrowTxHash?: string | null
+  releaseTxHash?: string | null
+  sender: Prisma.UserCreateNestedOneWithoutSentTransactionsInput
+  receiver: Prisma.UserCreateNestedOneWithoutReceivedTransactionsInput
+}
+
+export type TransactionUncheckedCreateWithoutRampOrdersInput = {
+  id?: string
+  senderId: string
+  receiverId: string
+  amountUsd: runtime.Decimal | runtime.DecimalJsLike | number | string
+  amountUsdc: runtime.Decimal | runtime.DecimalJsLike | number | string
+  amountInr: runtime.Decimal | runtime.DecimalJsLike | number | string
+  feeUsd: runtime.Decimal | runtime.DecimalJsLike | number | string
+  txHash?: string | null
+  status?: $Enums.TransactionStatus
+  createdAt?: Date | string
+  completedAt?: Date | string | null
+  lockedUsdToUsdc?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  lockedUsdcToInr?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  escrowId?: number | null
+  escrowState?: string | null
+  escrowTxHash?: string | null
+  releaseTxHash?: string | null
+}
+
+export type TransactionCreateOrConnectWithoutRampOrdersInput = {
+  where: Prisma.TransactionWhereUniqueInput
+  create: Prisma.XOR<Prisma.TransactionCreateWithoutRampOrdersInput, Prisma.TransactionUncheckedCreateWithoutRampOrdersInput>
+}
+
+export type TransactionUpsertWithoutRampOrdersInput = {
+  update: Prisma.XOR<Prisma.TransactionUpdateWithoutRampOrdersInput, Prisma.TransactionUncheckedUpdateWithoutRampOrdersInput>
+  create: Prisma.XOR<Prisma.TransactionCreateWithoutRampOrdersInput, Prisma.TransactionUncheckedCreateWithoutRampOrdersInput>
+  where?: Prisma.TransactionWhereInput
+}
+
+export type TransactionUpdateToOneWithWhereWithoutRampOrdersInput = {
+  where?: Prisma.TransactionWhereInput
+  data: Prisma.XOR<Prisma.TransactionUpdateWithoutRampOrdersInput, Prisma.TransactionUncheckedUpdateWithoutRampOrdersInput>
+}
+
+export type TransactionUpdateWithoutRampOrdersInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  amountUsd?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  amountUsdc?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  amountInr?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  feeUsd?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  txHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumTransactionStatusFieldUpdateOperationsInput | $Enums.TransactionStatus
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedUsdToUsdc?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  lockedUsdcToInr?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  escrowId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  escrowState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  escrowTxHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  releaseTxHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sender?: Prisma.UserUpdateOneRequiredWithoutSentTransactionsNestedInput
+  receiver?: Prisma.UserUpdateOneRequiredWithoutReceivedTransactionsNestedInput
+}
+
+export type TransactionUncheckedUpdateWithoutRampOrdersInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  senderId?: Prisma.StringFieldUpdateOperationsInput | string
+  receiverId?: Prisma.StringFieldUpdateOperationsInput | string
+  amountUsd?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  amountUsdc?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  amountInr?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  feeUsd?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  txHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.EnumTransactionStatusFieldUpdateOperationsInput | $Enums.TransactionStatus
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedUsdToUsdc?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  lockedUsdcToInr?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  escrowId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  escrowState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  escrowTxHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  releaseTxHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+}
+
 export type TransactionCreateManySenderInput = {
   id?: string
   receiverId: string
@@ -737,6 +1059,12 @@ export type TransactionCreateManySenderInput = {
   status?: $Enums.TransactionStatus
   createdAt?: Date | string
   completedAt?: Date | string | null
+  lockedUsdToUsdc?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  lockedUsdcToInr?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  escrowId?: number | null
+  escrowState?: string | null
+  escrowTxHash?: string | null
+  releaseTxHash?: string | null
 }
 
 export type TransactionCreateManyReceiverInput = {
@@ -750,6 +1078,12 @@ export type TransactionCreateManyReceiverInput = {
   status?: $Enums.TransactionStatus
   createdAt?: Date | string
   completedAt?: Date | string | null
+  lockedUsdToUsdc?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  lockedUsdcToInr?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  escrowId?: number | null
+  escrowState?: string | null
+  escrowTxHash?: string | null
+  releaseTxHash?: string | null
 }
 
 export type TransactionUpdateWithoutSenderInput = {
@@ -762,7 +1096,14 @@ export type TransactionUpdateWithoutSenderInput = {
   status?: Prisma.EnumTransactionStatusFieldUpdateOperationsInput | $Enums.TransactionStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedUsdToUsdc?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  lockedUsdcToInr?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  escrowId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  escrowState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  escrowTxHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  releaseTxHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   receiver?: Prisma.UserUpdateOneRequiredWithoutReceivedTransactionsNestedInput
+  rampOrders?: Prisma.RampOrderUpdateManyWithoutTransactionNestedInput
 }
 
 export type TransactionUncheckedUpdateWithoutSenderInput = {
@@ -776,6 +1117,13 @@ export type TransactionUncheckedUpdateWithoutSenderInput = {
   status?: Prisma.EnumTransactionStatusFieldUpdateOperationsInput | $Enums.TransactionStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedUsdToUsdc?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  lockedUsdcToInr?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  escrowId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  escrowState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  escrowTxHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  releaseTxHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  rampOrders?: Prisma.RampOrderUncheckedUpdateManyWithoutTransactionNestedInput
 }
 
 export type TransactionUncheckedUpdateManyWithoutSenderInput = {
@@ -789,6 +1137,12 @@ export type TransactionUncheckedUpdateManyWithoutSenderInput = {
   status?: Prisma.EnumTransactionStatusFieldUpdateOperationsInput | $Enums.TransactionStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedUsdToUsdc?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  lockedUsdcToInr?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  escrowId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  escrowState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  escrowTxHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  releaseTxHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
 export type TransactionUpdateWithoutReceiverInput = {
@@ -801,7 +1155,14 @@ export type TransactionUpdateWithoutReceiverInput = {
   status?: Prisma.EnumTransactionStatusFieldUpdateOperationsInput | $Enums.TransactionStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedUsdToUsdc?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  lockedUsdcToInr?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  escrowId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  escrowState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  escrowTxHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  releaseTxHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   sender?: Prisma.UserUpdateOneRequiredWithoutSentTransactionsNestedInput
+  rampOrders?: Prisma.RampOrderUpdateManyWithoutTransactionNestedInput
 }
 
 export type TransactionUncheckedUpdateWithoutReceiverInput = {
@@ -815,6 +1176,13 @@ export type TransactionUncheckedUpdateWithoutReceiverInput = {
   status?: Prisma.EnumTransactionStatusFieldUpdateOperationsInput | $Enums.TransactionStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedUsdToUsdc?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  lockedUsdcToInr?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  escrowId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  escrowState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  escrowTxHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  releaseTxHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  rampOrders?: Prisma.RampOrderUncheckedUpdateManyWithoutTransactionNestedInput
 }
 
 export type TransactionUncheckedUpdateManyWithoutReceiverInput = {
@@ -828,8 +1196,43 @@ export type TransactionUncheckedUpdateManyWithoutReceiverInput = {
   status?: Prisma.EnumTransactionStatusFieldUpdateOperationsInput | $Enums.TransactionStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  lockedUsdToUsdc?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  lockedUsdcToInr?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  escrowId?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  escrowState?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  escrowTxHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  releaseTxHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
 }
 
+
+/**
+ * Count Type TransactionCountOutputType
+ */
+
+export type TransactionCountOutputType = {
+  rampOrders: number
+}
+
+export type TransactionCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  rampOrders?: boolean | TransactionCountOutputTypeCountRampOrdersArgs
+}
+
+/**
+ * TransactionCountOutputType without action
+ */
+export type TransactionCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the TransactionCountOutputType
+   */
+  select?: Prisma.TransactionCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * TransactionCountOutputType without action
+ */
+export type TransactionCountOutputTypeCountRampOrdersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.RampOrderWhereInput
+}
 
 
 export type TransactionSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -844,8 +1247,16 @@ export type TransactionSelect<ExtArgs extends runtime.Types.Extensions.InternalA
   status?: boolean
   createdAt?: boolean
   completedAt?: boolean
+  lockedUsdToUsdc?: boolean
+  lockedUsdcToInr?: boolean
+  escrowId?: boolean
+  escrowState?: boolean
+  escrowTxHash?: boolean
+  releaseTxHash?: boolean
   sender?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   receiver?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  rampOrders?: boolean | Prisma.Transaction$rampOrdersArgs<ExtArgs>
+  _count?: boolean | Prisma.TransactionCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["transaction"]>
 
 export type TransactionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -860,6 +1271,12 @@ export type TransactionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
   status?: boolean
   createdAt?: boolean
   completedAt?: boolean
+  lockedUsdToUsdc?: boolean
+  lockedUsdcToInr?: boolean
+  escrowId?: boolean
+  escrowState?: boolean
+  escrowTxHash?: boolean
+  releaseTxHash?: boolean
   sender?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   receiver?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["transaction"]>
@@ -876,6 +1293,12 @@ export type TransactionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
   status?: boolean
   createdAt?: boolean
   completedAt?: boolean
+  lockedUsdToUsdc?: boolean
+  lockedUsdcToInr?: boolean
+  escrowId?: boolean
+  escrowState?: boolean
+  escrowTxHash?: boolean
+  releaseTxHash?: boolean
   sender?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   receiver?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["transaction"]>
@@ -892,12 +1315,20 @@ export type TransactionSelectScalar = {
   status?: boolean
   createdAt?: boolean
   completedAt?: boolean
+  lockedUsdToUsdc?: boolean
+  lockedUsdcToInr?: boolean
+  escrowId?: boolean
+  escrowState?: boolean
+  escrowTxHash?: boolean
+  releaseTxHash?: boolean
 }
 
-export type TransactionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "senderId" | "receiverId" | "amountUsd" | "amountUsdc" | "amountInr" | "feeUsd" | "txHash" | "status" | "createdAt" | "completedAt", ExtArgs["result"]["transaction"]>
+export type TransactionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "senderId" | "receiverId" | "amountUsd" | "amountUsdc" | "amountInr" | "feeUsd" | "txHash" | "status" | "createdAt" | "completedAt" | "lockedUsdToUsdc" | "lockedUsdcToInr" | "escrowId" | "escrowState" | "escrowTxHash" | "releaseTxHash", ExtArgs["result"]["transaction"]>
 export type TransactionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   sender?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   receiver?: boolean | Prisma.UserDefaultArgs<ExtArgs>
+  rampOrders?: boolean | Prisma.Transaction$rampOrdersArgs<ExtArgs>
+  _count?: boolean | Prisma.TransactionCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type TransactionIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   sender?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -913,6 +1344,7 @@ export type $TransactionPayload<ExtArgs extends runtime.Types.Extensions.Interna
   objects: {
     sender: Prisma.$UserPayload<ExtArgs>
     receiver: Prisma.$UserPayload<ExtArgs>
+    rampOrders: Prisma.$RampOrderPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -926,6 +1358,12 @@ export type $TransactionPayload<ExtArgs extends runtime.Types.Extensions.Interna
     status: $Enums.TransactionStatus
     createdAt: Date
     completedAt: Date | null
+    lockedUsdToUsdc: runtime.Decimal | null
+    lockedUsdcToInr: runtime.Decimal | null
+    escrowId: number | null
+    escrowState: string | null
+    escrowTxHash: string | null
+    releaseTxHash: string | null
   }, ExtArgs["result"]["transaction"]>
   composites: {}
 }
@@ -1322,6 +1760,7 @@ export interface Prisma__TransactionClient<T, Null = never, ExtArgs extends runt
   readonly [Symbol.toStringTag]: "PrismaPromise"
   sender<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   receiver<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  rampOrders<T extends Prisma.Transaction$rampOrdersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Transaction$rampOrdersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RampOrderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1362,6 +1801,12 @@ export interface TransactionFieldRefs {
   readonly status: Prisma.FieldRef<"Transaction", 'TransactionStatus'>
   readonly createdAt: Prisma.FieldRef<"Transaction", 'DateTime'>
   readonly completedAt: Prisma.FieldRef<"Transaction", 'DateTime'>
+  readonly lockedUsdToUsdc: Prisma.FieldRef<"Transaction", 'Decimal'>
+  readonly lockedUsdcToInr: Prisma.FieldRef<"Transaction", 'Decimal'>
+  readonly escrowId: Prisma.FieldRef<"Transaction", 'Int'>
+  readonly escrowState: Prisma.FieldRef<"Transaction", 'String'>
+  readonly escrowTxHash: Prisma.FieldRef<"Transaction", 'String'>
+  readonly releaseTxHash: Prisma.FieldRef<"Transaction", 'String'>
 }
     
 
@@ -1760,6 +2205,30 @@ export type TransactionDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.I
    * Limit how many Transactions to delete.
    */
   limit?: number
+}
+
+/**
+ * Transaction.rampOrders
+ */
+export type Transaction$rampOrdersArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the RampOrder
+   */
+  select?: Prisma.RampOrderSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the RampOrder
+   */
+  omit?: Prisma.RampOrderOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.RampOrderInclude<ExtArgs> | null
+  where?: Prisma.RampOrderWhereInput
+  orderBy?: Prisma.RampOrderOrderByWithRelationInput | Prisma.RampOrderOrderByWithRelationInput[]
+  cursor?: Prisma.RampOrderWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.RampOrderScalarFieldEnum | Prisma.RampOrderScalarFieldEnum[]
 }
 
 /**

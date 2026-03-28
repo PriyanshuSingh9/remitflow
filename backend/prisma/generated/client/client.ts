@@ -56,3 +56,8 @@ export type ExchangeRate = Prisma.ExchangeRateModel
  * 
  */
 export type Transaction = Prisma.TransactionModel
+/**
+ * Model RampOrder
+ * 
+ */
+export type RampOrder = Prisma.RampOrderModel

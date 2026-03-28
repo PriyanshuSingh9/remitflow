@@ -440,6 +440,7 @@ export async function createTransfer(currentUserId: string, input: TransferInput
     }
 
     const rate = toNumber(exchangeRate.rate) ?? 0;
+    const usdToUsdc = 1.0; // 1:1 for mock
     const feeUsd = roundMoney(input.amountUsd * 0.0085);
     const amountUsdc = roundCrypto(Math.max(input.amountUsd - feeUsd, 0));
     const amountInr = roundMoney(input.amountUsd * rate);
@@ -461,7 +462,9 @@ export async function createTransfer(currentUserId: string, input: TransferInput
         amountUsdc,
         amountInr,
         feeUsd,
-        status: "pending"
+        status: "pending",
+        lockedUsdToUsdc: usdToUsdc,
+        lockedUsdcToInr: rate
       },
       include: {
         sender: true,
@@ -471,12 +474,125 @@ export async function createTransfer(currentUserId: string, input: TransferInput
 
     return {
       transaction,
+      senderWalletAddress: sender.walletAddress,
       senderBalanceAfter: roundMoney(senderBalance - input.amountUsd)
     };
   });
 
+  // Create mock on-ramp order
+  const { createOnRampOrder } = await import("./ramp/mock-transak");
+  const { orderId, widgetUrl } = await createOnRampOrder({
+    transactionId: result.transaction.id,
+    fiatCurrency: "USD",
+    fiatAmount: input.amountUsd,
+    cryptoAmount: toNumber(result.transaction.amountUsdc) ?? 0,
+    walletAddress: result.senderWalletAddress
+  });
+
   return {
     transaction: serializeTransaction(result.transaction, currentUserId),
-    senderBalanceAfter: result.senderBalanceAfter
+    senderBalanceAfter: result.senderBalanceAfter,
+    onRampOrderId: orderId,
+    widgetUrl
   };
 }
+
+export async function completeOnRamp(externalOrderId: string) {
+  const { completeOnRampOrder } = await import("./ramp/mock-transak");
+  const order = await completeOnRampOrder(externalOrderId);
+  const transaction = order.transaction;
+
+  if (!transaction) {
+    throw new Error("Transaction not found for on-ramp order.");
+  }
+
+  const sender = await prisma.user.findUnique({ where: { id: transaction.senderId } });
+  const receiver = await prisma.user.findUnique({ where: { id: transaction.receiverId } });
+
+  if (!sender || !receiver) {
+    throw new Error("Sender or receiver not found.");
+  }
+
+  const amountUsdc = toNumber(transaction.amountUsdc) ?? 0;
+  // USDC has 6 decimals
+  const amountOnChain = BigInt(Math.round(amountUsdc * 1_000_000));
+
+  // 1. Mint MockUSDC to operator
+  const { mintMockUSDC, operatorDeposit, getOperatorAddress } = await import("./ramp/blockchain");
+  const operatorAddress = getOperatorAddress();
+  await mintMockUSDC(operatorAddress, amountOnChain);
+
+  // 2. Operator deposits to escrow
+  const { escrowId, txHash } = await operatorDeposit(
+    sender.walletAddress,
+    receiver.walletAddress,
+    amountOnChain
+  );
+
+  // 3. Update transaction
+  await prisma.transaction.update({
+    where: { id: transaction.id },
+    data: {
+      status: "escrow_locked",
+      escrowId,
+      escrowTxHash: txHash,
+      escrowState: "Deposited"
+    }
+  });
+
+  // 4. Kick off off-ramp pipeline
+  const { createOffRampOrder } = await import("./ramp/mock-onmeta");
+  await createOffRampOrder({
+    transactionId: transaction.id,
+    escrowId,
+    fiatCurrency: "INR",
+    fiatAmount: toNumber(transaction.amountInr) ?? 0,
+    cryptoAmount: amountUsdc,
+    walletAddress: receiver.walletAddress,
+    bankDetails: receiver.bankDetails
+  });
+
+  return {
+    transactionId: transaction.id,
+    escrowId,
+    escrowTxHash: txHash,
+    status: "escrow_locked"
+  };
+}
+
+export async function getTransferDetail(transactionId: string, currentUserId: string) {
+  const transaction = await prisma.transaction.findUnique({
+    where: { id: transactionId },
+    include: {
+      sender: true,
+      receiver: true,
+      rampOrders: {
+        orderBy: { createdAt: "asc" }
+      }
+    }
+  });
+
+  if (!transaction) {
+    throw new Error("Transfer not found.");
+  }
+
+  if (transaction.senderId !== currentUserId && transaction.receiverId !== currentUserId) {
+    throw new Error("You do not have access to this transfer.");
+  }
+
+  const onRampOrder = transaction.rampOrders.find((o: any) => o.type === "onramp");
+  const offRampOrder = transaction.rampOrders.find((o: any) => o.type === "offramp");
+
+  return {
+    transaction: serializeTransaction(transaction, currentUserId),
+    lockedUsdToUsdc: toNumber(transaction.lockedUsdToUsdc),
+    lockedUsdcToInr: toNumber(transaction.lockedUsdcToInr),
+    escrowId: transaction.escrowId,
+    escrowState: transaction.escrowState,
+    escrowTxHash: transaction.escrowTxHash,
+    releaseTxHash: transaction.releaseTxHash,
+    onRampStatus: onRampOrder?.status ?? null,
+    offRampStatus: offRampOrder?.status ?? null
+  };
+}
+

@@ -13,5 +13,14 @@ export const env = {
   googleClientId:
     read("GOOGLE_CLIENT_ID") ??
     "612184936512-j4tl40a3lmd793k0cirue0t2lca8660k.apps.googleusercontent.com",
-  jwtSecret: read("JWT_SECRET") ?? "super_secret_dev_key_for_remitflow"
+  jwtSecret: read("JWT_SECRET") ?? "super_secret_dev_key_for_remitflow",
+
+  // ─── Blockchain ──────────────────────────────────────────────────
+  polygonRpcUrl: read("POLYGON_AMOY_RPC_URL") ?? "https://rpc-amoy.polygon.technology/",
+  escrowContractAddress: read("ESCROW_CONTRACT_ADDRESS") ?? read("CONTRACT_ADDRESS") ?? "",
+  operatorPrivateKey: read("OPERATOR_PRIVATE_KEY") ?? "",
+  usdcAddress: read("USDC_ADDRESS") ?? "",
+
+  // ─── Mock Ramps ──────────────────────────────────────────────────
+  mockRampDelayMs: Number(read("MOCK_RAMP_DELAY_MS") ?? "3000"),
 };

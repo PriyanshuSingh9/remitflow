@@ -53,7 +53,8 @@ export const AnyNull = runtime.AnyNull
 export const ModelName = {
   User: 'User',
   ExchangeRate: 'ExchangeRate',
-  Transaction: 'Transaction'
+  Transaction: 'Transaction',
+  RampOrder: 'RampOrder'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -116,10 +117,37 @@ export const TransactionScalarFieldEnum = {
   txHash: 'txHash',
   status: 'status',
   createdAt: 'createdAt',
-  completedAt: 'completedAt'
+  completedAt: 'completedAt',
+  lockedUsdToUsdc: 'lockedUsdToUsdc',
+  lockedUsdcToInr: 'lockedUsdcToInr',
+  escrowId: 'escrowId',
+  escrowState: 'escrowState',
+  escrowTxHash: 'escrowTxHash',
+  releaseTxHash: 'releaseTxHash'
 } as const
 
 export type TransactionScalarFieldEnum = (typeof TransactionScalarFieldEnum)[keyof typeof TransactionScalarFieldEnum]
+
+
+export const RampOrderScalarFieldEnum = {
+  id: 'id',
+  type: 'type',
+  transactionId: 'transactionId',
+  externalOrderId: 'externalOrderId',
+  status: 'status',
+  fiatCurrency: 'fiatCurrency',
+  fiatAmount: 'fiatAmount',
+  cryptoCurrency: 'cryptoCurrency',
+  cryptoAmount: 'cryptoAmount',
+  walletAddress: 'walletAddress',
+  bankDetails: 'bankDetails',
+  txHash: 'txHash',
+  metadata: 'metadata',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type RampOrderScalarFieldEnum = (typeof RampOrderScalarFieldEnum)[keyof typeof RampOrderScalarFieldEnum]
 
 
 export const SortOrder = {

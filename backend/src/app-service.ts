@@ -307,7 +307,7 @@ export async function getDashboard(currentUserId: string) {
     }),
     prisma.transaction.findMany({
       where: {
-        OR: [{ senderId: currentUserId }, { receiverId: currentUserId }]
+        senderId: currentUserId
       },
       include: {
         sender: true,
@@ -341,12 +341,12 @@ export async function searchRecipients(currentUserId: string, query: string) {
   const recipients = await prisma.user.findMany({
     where: {
       id: { not: currentUserId },
+      country: "IN",
       ...(search
         ? {
             OR: [
               { displayName: { contains: search, mode: "insensitive" } },
-              { email: { contains: search, mode: "insensitive" } },
-              { phoneNumber: { contains: search, mode: "insensitive" } }
+              { email: { contains: search, mode: "insensitive" } }
             ]
           }
         : {})
@@ -397,7 +397,7 @@ export async function createTransfer(currentUserId: string, input: TransferInput
 
     const rate = USD_INR_RATE.rate;
     const usdToUsdc = 1.0; // 1:1 for mock
-    const feeUsd = roundMoney(input.amountUsd * 0.0085);
+    const feeUsd = roundMoney(input.amountUsd * 0.025);
     const amountUsdc = roundCrypto(Math.max(input.amountUsd - feeUsd, 0));
     const amountInr = roundMoney(input.amountUsd * rate);
 

@@ -2,11 +2,15 @@ import 'dart:math';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import 'transfer_screen.dart';
 import 'settings_screen.dart';
 import '../services/auth_service.dart';
+import '../services/app_data_service.dart';
 import '../services/exchange_rate_service.dart';
+
+
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -527,65 +531,101 @@ class _ExchangeRateTickerState extends State<_ExchangeRateTicker> {
 // RECENT TRANSACTIONS — Remittance-specific transactions
 // ═══════════════════════════════════════════════════════════════════════
 
+// ═══════════════════════════════════════════════════════════════════════════
+// RECENT TRANSACTIONS — live from AppDataService
+// ═══════════════════════════════════════════════════════════════════════════
+
 class _RecentTransactions extends StatelessWidget {
   const _RecentTransactions();
 
+  String _fmtDate(DateTime dt) {
+    final now = DateTime.now();
+    final diff = now.difference(dt);
+    if (diff.inDays == 0) return 'Today, ${DateFormat('HH:mm').format(dt)}';
+    if (diff.inDays == 1) return 'Yesterday, ${DateFormat('HH:mm').format(dt)}';
+    return DateFormat('MMM d, HH:mm').format(dt);
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        children: [
-          // Section Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
+    return ListenableBuilder(
+      listenable: AppDataService(),
+      builder: (context, _) {
+        final txns = (AppDataService().dashboard?.recentTransactions ?? [])
+            .where((tx) => tx.isSent)
+            .toList();
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
             children: [
-              Text(
-                'Recent Transactions',
-                style: GoogleFonts.newsreader(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.onSurface,
-                ),
+              // Section Header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    'Recent Transactions',
+                    style: GoogleFonts.newsreader(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.onSurface,
+                    ),
+                  ),
+                  Text(
+                    'VIEW ALL',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: AppTheme.secondary,
+                      letterSpacing: 2.0,
+                    ),
+                  ),
+                ],
               ),
-              Text(
-                'VIEW ALL',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  color: AppTheme.secondary,
-                  letterSpacing: 2.0,
-                ),
-              ),
+
+              const SizedBox(height: 24),
+
+              if (txns.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  child: Text(
+                    'No transactions yet',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 14,
+                      color: AppTheme.onSurfaceVariant,
+                    ),
+                  ),
+                )
+              else
+                ...txns.map((tx) {
+                  final isSent = tx.isSent;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 20),
+                    child: _TransactionItem(
+                      icon: isSent
+                          ? Icons.arrow_upward_rounded
+                          : Icons.arrow_downward_rounded,
+                      gradientColors: isSent
+                          ? const [Color(0xFF8FB89A), Color(0xFF476556)]
+                          : const [Color(0xFF8AAAB8), Color(0xFF2B5F72)],
+                      title: isSent
+                          ? 'Sent to ${tx.counterparty.preferredName}'
+                          : 'Received from ${tx.counterparty.preferredName}',
+                      subtitle: _fmtDate(tx.createdAt),
+                      amount: isSent
+                          ? '-\$${tx.amountUsd.toStringAsFixed(2)}'
+                          : '+₹${NumberFormat('#,##,##0').format(tx.amountInr)}',
+                      amountColor: isSent
+                          ? AppTheme.onSurface
+                          : AppTheme.vaultGreen,
+                    ),
+                  );
+                }),
             ],
           ),
-
-          const SizedBox(height: 24),
-
-          // Transaction 1 — Sent to India
-          const _TransactionItem(
-            icon: Icons.arrow_upward_rounded,
-            gradientColors: [Color(0xFF8FB89A), Color(0xFF476556)],
-            title: 'Sent to Priya Sharma',
-            subtitle: 'Mar 23, 14:30',
-            amount: '-\$500.00',
-            amountColor: AppTheme.onSurface,
-          ),
-
-          const SizedBox(height: 20),
-
-          // Transaction 3 — Sent to India
-          const _TransactionItem(
-            icon: Icons.arrow_upward_rounded,
-            gradientColors: [Color(0xFF8FB89A), Color(0xFF476556)],
-            title: 'Sent to Rahul Verma',
-            subtitle: 'Mar 18, 20:45',
-            amount: '-\$250.00',
-            amountColor: AppTheme.onSurface,
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

@@ -12,7 +12,7 @@ import {
   syncSessionFromGoogleIdentity
 } from "./app-service";
 import { renderWidgetHtml } from "./ramp/mock-transak";
-import { startEventListener } from "./ramp/blockchain";
+import { startEscrowPoller } from "./ramp/blockchain";
 import { env } from "./env";
 
 type JsonRecord = Record<string, unknown>;
@@ -275,13 +275,11 @@ const server = createServer(async (request, response) => {
 });
 
 if (env.enableBlockchain) {
-  try {
-    startEventListener();
-  } catch (err) {
-    console.warn("[server] Could not start event listener:", err);
-  }
+  startEscrowPoller().catch((err) =>
+    console.warn("[server] Could not start escrow poller:", err)
+  );
 } else {
-  console.log("[server] Blockchain listener disabled. Set ENABLE_BLOCKCHAIN=true to enable it.");
+  console.log("[server] Blockchain disabled. Set ENABLE_BLOCKCHAIN=true to connect.");
 }
 
 server.listen(env.port, "0.0.0.0", () => {

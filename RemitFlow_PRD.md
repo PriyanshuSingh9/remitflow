@@ -5,14 +5,13 @@
 
 | Layer | Technology | Notes |
 |---|---|---|
-| Mobile App | Flutter (Dart) 
+| Mobile App | Flutter (Dart) | User-facing interface |
 | Blockchain | Polygon Amoy Testnet | EVM-compatible, near-zero gas |
-| Smart Contract | Solidity 
-| Wallet Abstraction | Firebase Auth + Deterministic Local Key | Google login, HMAC-SHA256 local key, no seed phrases |
-| Blockchain SDK | web3dart (Flutter package) | Talks to Polygon RPC |
+| Smart Contract | RemitFlowEscrow (Solidity) | Locks USDC until off-ramp completes |
+| Wallet Abstraction | Google OAuth + HMAC Key | No seed phrases, deterministic local wallet |
+| Blockchain SDK | web3dart (Flutter) / ethers.js (Backend) | Cross-chain and RPC interactions |
 | On-Ramp | Transak API | USD → USDC via WebView widget |
-| Off-Ramp | OnMeta API | USDC → INR to bank/UPI |
-| Smart Contract | RemitFlow Escrow (Solidity) | Locks USDC until off-ramp completes |
+| Off-Ramp | OnMeta API | USDC → INR via bank/UPI |
 | Database | Neon (PostgreSQL) + Prisma | Transaction history, user profiles |
 | Backend API | Express.js (Node.js) | Manages escrow, DB sync, Google Auth verification |
 
@@ -319,7 +318,7 @@ Store all secrets in a `.env` file (never commit to git):
 ```
 POLYGON_RPC_URL=https://rpc-amoy.polygon.technology/
 POLYGON_CHAIN_ID=80002
-CONTRACT_ADDRESS=<deployed contract address from Forge>
+CONTRACT_ADDRESS=0x3a0937C9B8eecad82549369187EF1f96BD9B6c23
 CONTRACT_ABI=<ABI JSON string>
 TRANSAK_API_KEY=<your Transak API key>
 ONMETA_API_KEY=<your OnMeta API key>

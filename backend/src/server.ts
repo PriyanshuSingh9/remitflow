@@ -274,11 +274,14 @@ const server = createServer(async (request, response) => {
   }
 });
 
-// Start blockchain event listener
-try {
-  startEventListener();
-} catch (err) {
-  console.warn("[server] Could not start event listener:", err);
+if (env.enableBlockchain) {
+  try {
+    startEventListener();
+  } catch (err) {
+    console.warn("[server] Could not start event listener:", err);
+  }
+} else {
+  console.log("[server] Blockchain listener disabled. Set ENABLE_BLOCKCHAIN=true to enable it.");
 }
 
 server.listen(env.port, "0.0.0.0", () => {

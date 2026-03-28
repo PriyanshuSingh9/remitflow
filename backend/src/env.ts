@@ -10,6 +10,7 @@ function read(name: string): string | undefined {
 export const env = {
   port: Number(read("PORT") ?? DEFAULT_PORT),
   enableDemoBootstrap: (read("ENABLE_DEMO_BOOTSTRAP") ?? "true").toLowerCase() !== "false",
+  enableBlockchain: (read("ENABLE_BLOCKCHAIN") ?? "false").toLowerCase() === "true",
   googleClientId:
     read("GOOGLE_CLIENT_ID") ??
     "612184936512-j4tl40a3lmd793k0cirue0t2lca8660k.apps.googleusercontent.com",

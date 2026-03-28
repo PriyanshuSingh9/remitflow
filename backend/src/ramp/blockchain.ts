@@ -1,4 +1,5 @@
 import { ethers } from "ethers";
+import { EventEmitter } from "node:events";
 import { env } from "../env";
 import { prisma } from "../prisma";
 
@@ -27,6 +28,10 @@ const MOCK_USDC_ABI = [
   "function balanceOf(address) view returns (uint256)",
   "function decimals() view returns (uint8)",
 ];
+
+// ─── Blockchain Event Emitter ──────────────────────────────────────
+
+export const escrowEvents = new EventEmitter();
 
 // ─── Singleton instances ───────────────────────────────────────────
 
@@ -166,54 +171,103 @@ export function getOperatorAddress(): string {
   return getOperatorWallet().address;
 }
 
-// ─── Event Listener ────────────────────────────────────────────────
+// ─── Block Poller (rate-limit friendly) ────────────────────────────
 
-export function startEventListener() {
+let _lastScannedBlock = 0;
+let _pollBackoffMs = 0;
+const POLL_INTERVAL_MS = 15_000; // 15 seconds — safe for free RPCs
+const MAX_BACKOFF_MS = 120_000;
+
+const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+export async function startEscrowPoller() {
   if (!env.escrowContractAddress || !env.operatorPrivateKey) {
-    console.log("[blockchain] Skipping event listener — missing contract address or operator key.");
+    console.log("[blockchain] Skipping poller — missing contract address or operator key.");
     return;
   }
 
-  const escrow = getEscrowContract();
+  const provider = getProvider();
+  _lastScannedBlock = await provider.getBlockNumber();
+  console.log(`[blockchain] Poller started from block ${_lastScannedBlock} on ${env.escrowContractAddress}`);
 
-  escrow.on("EscrowDeposited", async (escrowId: bigint, _sender: string, _receiver: string, _amount: bigint, _timestamp: bigint, event: any) => {
-    const txHash = event.log?.transactionHash ?? "";
-    console.log(`[event] EscrowDeposited id=${escrowId} tx=${txHash}`);
+  const poll = async () => {
     try {
-      await prisma.transaction.updateMany({
-        where: { escrowId: Number(escrowId), escrowTxHash: null },
-        data: { escrowTxHash: txHash, escrowState: "Deposited" },
-      });
-    } catch (err) {
-      console.error("[event] Failed to update EscrowDeposited:", err);
-    }
-  });
+      // Backoff if we hit rate limits previously
+      if (_pollBackoffMs > 0) {
+        console.log(`[poller] Backing off ${_pollBackoffMs}ms...`);
+        await delay(_pollBackoffMs);
+      }
 
-  escrow.on("EscrowReleased", async (escrowId: bigint, _receiver: string, _amount: bigint, _timestamp: bigint, event: any) => {
-    const txHash = event.log?.transactionHash ?? "";
-    console.log(`[event] EscrowReleased id=${escrowId} tx=${txHash}`);
-    try {
-      await prisma.transaction.updateMany({
-        where: { escrowId: Number(escrowId) },
-        data: { releaseTxHash: txHash, escrowState: "Released" },
-      });
-    } catch (err) {
-      console.error("[event] Failed to update EscrowReleased:", err);
-    }
-  });
+      const currentBlock = await provider.getBlockNumber();
+      if (currentBlock <= _lastScannedBlock) return;
 
-  escrow.on("EscrowRefunded", async (escrowId: bigint, _sender: string, _amount: bigint, _timestamp: bigint, event: any) => {
-    const txHash = event.log?.transactionHash ?? "";
-    console.log(`[event] EscrowRefunded id=${escrowId} tx=${txHash}`);
-    try {
-      await prisma.transaction.updateMany({
-        where: { escrowId: Number(escrowId) },
-        data: { escrowState: "Refunded", status: "refunded" },
-      });
-    } catch (err) {
-      console.error("[event] Failed to update EscrowRefunded:", err);
-    }
-  });
+      const escrow = getEscrowContract();
+      const fromBlock = _lastScannedBlock + 1;
 
-  console.log(`[blockchain] Event listener started for contract ${env.escrowContractAddress}`);
+      // Query events sequentially with small gaps to avoid rate limits
+      const depositLogs = await escrow.queryFilter("EscrowDeposited", fromBlock, currentBlock);
+      for (const log of depositLogs) {
+        if ("args" in log) {
+          const a = (log as any).args;
+          console.log(`[poller] EscrowDeposited id=${a.escrowId} tx=${log.transactionHash}`);
+          escrowEvents.emit("EscrowDeposited", {
+            escrowId: Number(a.escrowId),
+            sender: a.sender as string,
+            receiver: a.receiver as string,
+            amount: a.amount as bigint,
+            txHash: log.transactionHash,
+          });
+        }
+      }
+
+      await delay(500); // gap between RPC calls
+
+      const releaseLogs = await escrow.queryFilter("EscrowReleased", fromBlock, currentBlock);
+      for (const log of releaseLogs) {
+        if ("args" in log) {
+          const a = (log as any).args;
+          console.log(`[poller] EscrowReleased id=${a.escrowId} tx=${log.transactionHash}`);
+          escrowEvents.emit("EscrowReleased", {
+            escrowId: Number(a.escrowId),
+            txHash: log.transactionHash,
+          });
+        }
+      }
+
+      await delay(500);
+
+      const refundLogs = await escrow.queryFilter("EscrowRefunded", fromBlock, currentBlock);
+      for (const log of refundLogs) {
+        if ("args" in log) {
+          const a = (log as any).args;
+          console.log(`[poller] EscrowRefunded id=${a.escrowId} tx=${log.transactionHash}`);
+          escrowEvents.emit("EscrowRefunded", {
+            escrowId: Number(a.escrowId),
+            txHash: log.transactionHash,
+          });
+        }
+      }
+
+      _lastScannedBlock = currentBlock;
+      _pollBackoffMs = 0; // reset backoff on success
+    } catch (err: any) {
+      const isRateLimited = err?.message?.includes("Too Many Requests") || err?.code === -32005;
+      if (isRateLimited) {
+        _pollBackoffMs = Math.min((_pollBackoffMs || POLL_INTERVAL_MS) * 2, MAX_BACKOFF_MS);
+        console.warn(`[poller] Rate limited — backing off to ${_pollBackoffMs}ms`);
+      } else {
+        console.error("[poller] Poll error:", err);
+      }
+    }
+  };
+
+  // Use recursive setTimeout instead of setInterval to prevent overlap
+  const schedulePoll = () => {
+    setTimeout(async () => {
+      await poll();
+      schedulePoll();
+    }, POLL_INTERVAL_MS);
+  };
+  schedulePoll();
 }
+

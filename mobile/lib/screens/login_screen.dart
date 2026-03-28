@@ -141,10 +141,10 @@ class LoginScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                  if (AuthService().errorMessage != null) ...[
+                  if (AuthService().lastError != null) ...[
                     const SizedBox(height: 12),
                     Text(
-                      AuthService().errorMessage!,
+                      AuthService().lastError!,
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,

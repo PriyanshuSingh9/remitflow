@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
+import 'backend_endpoint_resolver.dart';
 
 class ApiException implements Exception {
   const ApiException(this.message, {this.statusCode});
@@ -14,46 +14,32 @@ class ApiException implements Exception {
 }
 
 class ApiClient {
-  ApiClient({String? baseUrl}) : _baseUrl = baseUrl ?? _resolveBaseUrl();
+  ApiClient({String? baseUrl}) : _baseUrlOverride = baseUrl;
 
-  final String _baseUrl;
-
-  static String _resolveBaseUrl() {
-    const configured = String.fromEnvironment('REMITFLOW_API_BASE_URL');
-    if (configured.isNotEmpty) {
-      return configured;
-    }
-    if (kIsWeb) {
-      return 'http://localhost:8787';
-    }
-    if (Platform.isAndroid) {
-      return 'http://10.0.2.2:8787';
-    }
-    return 'http://127.0.0.1:8787';
-  }
+  final String? _baseUrlOverride;
 
   Future<Map<String, dynamic>> getJson(
     String path, {
-    required String idToken,
+    required String sessionToken,
     Map<String, String>? queryParameters,
   }) {
     return _send(
       method: 'GET',
       path: path,
-      idToken: idToken,
+      sessionToken: sessionToken,
       queryParameters: queryParameters,
     );
   }
 
   Future<Map<String, dynamic>> postJson(
     String path, {
-    required String idToken,
+    required String sessionToken,
     Map<String, dynamic>? body,
   }) {
     return _send(
       method: 'POST',
       path: path,
-      idToken: idToken,
+      sessionToken: sessionToken,
       body: body,
     );
   }
@@ -61,11 +47,12 @@ class ApiClient {
   Future<Map<String, dynamic>> _send({
     required String method,
     required String path,
-    required String idToken,
+    required String sessionToken,
     Map<String, String>? queryParameters,
     Map<String, dynamic>? body,
   }) async {
-    final uri = Uri.parse('$_baseUrl$path').replace(
+    final baseUrl = _baseUrlOverride ?? await BackendEndpointResolver.resolveBaseUrl();
+    final uri = Uri.parse('$baseUrl$path').replace(
       queryParameters: queryParameters == null || queryParameters.isEmpty
           ? null
           : queryParameters,
@@ -73,7 +60,7 @@ class ApiClient {
     final client = HttpClient();
     try {
       final request = await client.openUrl(method, uri);
-      request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $idToken');
+      request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $sessionToken');
       request.headers.contentType = ContentType.json;
       if (body != null) {
         request.write(jsonEncode(body));
@@ -95,9 +82,11 @@ class ApiClient {
       }
 
       throw const ApiException('Unexpected response from backend.');
+    } on BackendConnectionException catch (error) {
+      throw ApiException(error.message);
     } on SocketException {
       throw const ApiException(
-        'Could not reach the RemitFlow backend. Start the local server or set REMITFLOW_API_BASE_URL.',
+        'Could not reach the RemitFlow backend. Start the backend server and make sure port 8787 is reachable.',
       );
     } finally {
       client.close(force: true);

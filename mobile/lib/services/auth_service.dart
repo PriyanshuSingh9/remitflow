@@ -1,11 +1,14 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:crypto/crypto.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:http/http.dart' as http;
 import 'package:web3dart/web3dart.dart';
+
+import 'backend_endpoint_resolver.dart';
 
 class AuthService extends ChangeNotifier {
   AuthService._internal();
@@ -14,8 +17,18 @@ class AuthService extends ChangeNotifier {
 
   factory AuthService() => _instance;
 
-  final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email', 'profile']);
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  static const String _defaultGoogleServerClientId =
+      '612184936512-j4tl40a3lmd793k0cirue0t2lca8660k.apps.googleusercontent.com';
+  static const String _sessionTokenKey = 'session_token';
+  static const String _walletKey = 'wallet_private_key';
+  static const String _userEmailKey = 'user_email';
+  static const String _userNameKey = 'user_name';
+  static const String _userPhotoKey = 'user_photo';
+
+  late final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: ['email', 'profile'],
+    serverClientId: _googleServerClientId,
+  );
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
   bool _isLoading = false;
@@ -24,45 +37,45 @@ class AuthService extends ChangeNotifier {
   String? _userEmail;
   String? _userName;
   String? _userPhoto;
+  String? _sessionToken;
   String? _lastError;
 
   bool get isLoading => _isLoading;
-  bool get isAuthenticated => _auth.currentUser != null;
+  bool get isAuthenticated => _sessionToken != null && _sessionToken!.isNotEmpty;
   String? get walletAddress => _walletAddress;
   String? get userEmail => _userEmail;
   String? get userName => _userName;
   String? get userPhoto => _userPhoto;
   String? get privKey => _privKey;
   String? get lastError => _lastError;
-  String? get userPhoneNumber => _auth.currentUser?.phoneNumber;
+  String? get userPhoneNumber => null;
+  String? get sessionToken => _sessionToken;
+
+  String get _googleServerClientId {
+    const configured = String.fromEnvironment('REMITFLOW_GOOGLE_SERVER_CLIENT_ID');
+    if (configured.isNotEmpty) {
+      return configured;
+    }
+    return _defaultGoogleServerClientId;
+  }
 
   Future<void> init() async {
     try {
-      if (_auth.currentUser != null) {
-        await _restoreSession();
+      _sessionToken = await _secureStorage.read(key: _sessionTokenKey);
+      _userEmail = await _secureStorage.read(key: _userEmailKey);
+      _userName = await _secureStorage.read(key: _userNameKey);
+      _userPhoto = await _secureStorage.read(key: _userPhotoKey);
+
+      final storedKey = await _secureStorage.read(key: _walletKey);
+      if (storedKey != null && storedKey.isNotEmpty) {
+        _privKey = storedKey;
+        _deriveWalletAddress();
       }
+      notifyListeners();
     } catch (error) {
       debugPrint('AuthService init error: $error');
       _lastError = error.toString();
     }
-  }
-
-  Future<void> _restoreSession() async {
-    final user = _auth.currentUser;
-    if (user == null) {
-      return;
-    }
-
-    _userEmail = user.email;
-    _userName = user.displayName;
-    _userPhoto = user.photoURL;
-
-    final storedKey = await _secureStorage.read(key: 'wallet_private_key');
-    if (storedKey != null && storedKey.isNotEmpty) {
-      _privKey = storedKey;
-      _deriveWalletAddress();
-    }
-    notifyListeners();
   }
 
   Future<bool> loginWithGoogle() async {
@@ -77,30 +90,69 @@ class AuthService extends ChangeNotifier {
         return false;
       }
 
-      final GoogleSignInAuthentication googleAuth = await account.authentication;
-      final AuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      final UserCredential userCredential = await _auth.signInWithCredential(credential);
-      final User? user = userCredential.user;
-      if (user == null) {
-        _lastError = 'Google sign-in did not return a Firebase user.';
+      final googleAuth = await account.authentication;
+      final idToken = googleAuth.idToken;
+      if (idToken == null || idToken.isEmpty) {
+        _lastError =
+            'Google sign-in completed, but no ID token was returned. Check the Google web client ID.';
         return false;
       }
 
-      _userEmail = user.email;
-      _userName = user.displayName;
-      _userPhoto = user.photoURL;
-      _privKey = _generatePrivateKey(user.uid);
-      _deriveWalletAddress();
+      _userEmail = account.email;
+      _userName = account.displayName;
+      _userPhoto = account.photoUrl;
 
-      await _secureStorage.write(key: 'wallet_private_key', value: _privKey);
+      final googleSubject = _extractGoogleSubject(idToken) ?? account.id;
+      _privKey = _generatePrivateKey(googleSubject);
+      _deriveWalletAddress();
+      await _secureStorage.write(key: _walletKey, value: _privKey);
+      final backendBaseUrl = await BackendEndpointResolver.resolveBaseUrl(
+        forceRefresh: true,
+      );
+
+      final response = await http
+          .post(
+            Uri.parse('$backendBaseUrl/auth/google'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'idToken': idToken,
+              'walletAddress': _walletAddress,
+            }),
+          )
+          .timeout(const Duration(seconds: 15));
+
+      final payload = jsonDecode(response.body) as Map<String, dynamic>;
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        final details = payload['error'] ?? payload['details'] ?? 'Authentication failed.';
+        _lastError = details.toString();
+        return false;
+      }
+
+      final user = payload['user'] as Map<String, dynamic>;
+      _sessionToken = payload['token'] as String?;
+      _userEmail = (user['email'] as String?) ?? _userEmail;
+      _userName = (user['displayName'] as String?) ?? _userName;
+      _userPhoto = (user['photoUrl'] as String?) ?? _userPhoto;
+      _walletAddress = (user['walletAddress'] as String?) ?? _walletAddress;
+
+      await _secureStorage.write(key: _sessionTokenKey, value: _sessionToken);
+      await _secureStorage.write(key: _userEmailKey, value: _userEmail);
+      await _secureStorage.write(key: _userNameKey, value: _userName);
+      await _secureStorage.write(key: _userPhotoKey, value: _userPhoto);
       return true;
+    } on BackendConnectionException catch (error) {
+      _lastError = error.message;
+      return false;
+    } on SocketException {
+      _lastError =
+          'Could not reach the RemitFlow backend. Start the backend server and make sure port 8787 is reachable.';
+      return false;
+    } on http.ClientException catch (error) {
+      _lastError = error.message;
+      return false;
     } catch (error) {
       debugPrint('Login error: $error');
-      _lastError = error.toString();
+      _lastError = error.toString().replaceFirst('Exception: ', '');
       return false;
     } finally {
       _isLoading = false;
@@ -108,16 +160,28 @@ class AuthService extends ChangeNotifier {
     }
   }
 
-  Future<String?> getIdToken({bool forceRefresh = false}) async {
-    if (_auth.currentUser == null) return null;
-    return await _auth.currentUser!.getIdToken(forceRefresh);
-  }
-
-  String _generatePrivateKey(String uid) {
+  String _generatePrivateKey(String subject) {
     final hmacKey = utf8.encode('remitflow-wallet-v1');
     final hmac = Hmac(sha256, hmacKey);
-    final digest = hmac.convert(utf8.encode(uid));
+    final digest = hmac.convert(utf8.encode(subject));
     return digest.toString();
+  }
+
+  String? _extractGoogleSubject(String idToken) {
+    try {
+      final parts = idToken.split('.');
+      if (parts.length < 2) {
+        return null;
+      }
+
+      final normalized = base64Url.normalize(parts[1]);
+      final payload =
+          jsonDecode(utf8.decode(base64Url.decode(normalized))) as Map<String, dynamic>;
+      final sub = payload['sub'];
+      return sub is String && sub.isNotEmpty ? sub : null;
+    } catch (_) {
+      return null;
+    }
   }
 
   void _deriveWalletAddress() {
@@ -138,9 +202,9 @@ class AuthService extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     try {
-      await _auth.signOut();
       await _googleSignIn.signOut();
       await _secureStorage.deleteAll();
+      _sessionToken = null;
       _privKey = null;
       _walletAddress = null;
       _userEmail = null;

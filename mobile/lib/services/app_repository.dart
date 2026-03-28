@@ -6,36 +6,23 @@ class AppRepository {
 
   final ApiClient _apiClient;
 
-  Future<SessionUser> syncSession({
-    required String idToken,
-    String? walletAddress,
-    String? phoneNumber,
-  }) async {
-    final response = await _apiClient.postJson(
-      '/auth/session',
-      idToken: idToken,
-      body: {
-        if (walletAddress != null && walletAddress.isNotEmpty)
-          'walletAddress': walletAddress,
-        if (phoneNumber != null && phoneNumber.isNotEmpty) 'phoneNumber': phoneNumber,
-      },
-    );
-
+  Future<SessionUser> fetchCurrentUser({required String sessionToken}) async {
+    final response = await _apiClient.getJson('/auth/me', sessionToken: sessionToken);
     return SessionUser.fromJson(response['user'] as Map<String, dynamic>);
   }
 
-  Future<DashboardData> fetchDashboard({required String idToken}) async {
-    final response = await _apiClient.getJson('/me/dashboard', idToken: idToken);
+  Future<DashboardData> fetchDashboard({required String sessionToken}) async {
+    final response = await _apiClient.getJson('/me/dashboard', sessionToken: sessionToken);
     return DashboardData.fromJson(response);
   }
 
   Future<List<RecipientSummary>> searchRecipients({
-    required String idToken,
+    required String sessionToken,
     required String query,
   }) async {
     final response = await _apiClient.getJson(
       '/recipients',
-      idToken: idToken,
+      sessionToken: sessionToken,
       queryParameters: query.isEmpty ? null : {'q': query},
     );
 
@@ -45,13 +32,13 @@ class AppRepository {
   }
 
   Future<TransferReceipt> createTransfer({
-    required String idToken,
+    required String sessionToken,
     required String recipientId,
     required double amountUsd,
   }) async {
     final response = await _apiClient.postJson(
       '/transfers',
-      idToken: idToken,
+      sessionToken: sessionToken,
       body: {
         'recipientId': recipientId,
         'amountUsd': amountUsd,

@@ -55,14 +55,9 @@ class AppDataService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final idToken = await _requireIdToken();
-      final auth = AuthService();
-      _sessionUser = await _repository.syncSession(
-        idToken: idToken,
-        walletAddress: auth.walletAddress,
-        phoneNumber: auth.userPhoneNumber,
-      );
-      _dashboard = await _repository.fetchDashboard(idToken: idToken);
+      final sessionToken = _requireSessionToken();
+      _sessionUser = await _repository.fetchCurrentUser(sessionToken: sessionToken);
+      _dashboard = await _repository.fetchDashboard(sessionToken: sessionToken);
       _sessionUser = _dashboard!.user;
     } catch (error) {
       _bootstrapErrorMessage = _readableError(error);
@@ -85,8 +80,8 @@ class AppDataService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final idToken = await _requireIdToken();
-      _dashboard = await _repository.fetchDashboard(idToken: idToken);
+      final sessionToken = _requireSessionToken();
+      _dashboard = await _repository.fetchDashboard(sessionToken: sessionToken);
       _sessionUser = _dashboard!.user;
     } catch (error) {
       _bootstrapErrorMessage = _readableError(error);
@@ -107,9 +102,9 @@ class AppDataService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final idToken = await _requireIdToken();
+      final sessionToken = _requireSessionToken();
       final results = await _repository.searchRecipients(
-        idToken: idToken,
+        sessionToken: sessionToken,
         query: query.trim(),
       );
       if (requestId == _recipientSearchSequence) {
@@ -141,9 +136,9 @@ class AppDataService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final idToken = await _requireIdToken();
+      final sessionToken = _requireSessionToken();
       final receipt = await _repository.createTransfer(
-        idToken: idToken,
+        sessionToken: sessionToken,
         recipientId: recipientId,
         amountUsd: amountUsd,
       );
@@ -175,12 +170,12 @@ class AppDataService extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<String> _requireIdToken() async {
-    final idToken = await AuthService().getIdToken(forceRefresh: true);
-    if (idToken == null || idToken.isEmpty) {
-      throw StateError('Firebase session is missing. Please sign in again.');
+  String _requireSessionToken() {
+    final sessionToken = AuthService().sessionToken;
+    if (sessionToken == null || sessionToken.isEmpty) {
+      throw StateError('Auth session is missing. Please sign in again.');
     }
-    return idToken;
+    return sessionToken;
   }
 
   String _readableError(Object error) {

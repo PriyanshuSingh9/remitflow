@@ -1,4 +1,3 @@
-import type { DecodedIdToken } from "firebase-admin/auth";
 import { prisma } from "./prisma";
 import { env } from "./env";
 
@@ -50,6 +49,13 @@ type SessionInput = {
   phoneNumber?: string;
 };
 
+type GoogleIdentity = {
+  sub: string;
+  email?: string | null;
+  name?: string | null;
+  picture?: string | null;
+};
+
 type TransferInput = {
   recipientId: string;
   amountUsd: number;
@@ -63,16 +69,16 @@ function toNumber(value: { toString(): string } | number | null | undefined): nu
   return Number(value.toString());
 }
 
-function requireEmail(token: DecodedIdToken): string {
-  if (!token.email) {
-    throw new Error("Authenticated Firebase user is missing an email address.");
+function requireEmail(identity: GoogleIdentity): string {
+  if (!identity.email) {
+    throw new Error("Authenticated Google user is missing an email address.");
   }
 
-  return token.email.toLowerCase();
+  return identity.email.toLowerCase();
 }
 
-function fallbackWalletAddress(firebaseUid: string): string {
-  const hex = Buffer.from(firebaseUid).toString("hex").padEnd(40, "0").slice(0, 40);
+function fallbackWalletAddress(googleSubject: string): string {
+  const hex = Buffer.from(googleSubject).toString("hex").padEnd(40, "0").slice(0, 40);
   return `0x${hex}`;
 }
 
@@ -260,13 +266,13 @@ function serializeTransaction(
   };
 }
 
-export async function syncSessionFromToken(token: DecodedIdToken, input: SessionInput) {
+export async function syncSessionFromGoogleIdentity(identity: GoogleIdentity, input: SessionInput) {
   await ensureExchangeRate();
 
-  const email = requireEmail(token);
+  const email = requireEmail(identity);
   const existingUser = await prisma.user.findFirst({
     where: {
-      OR: [{ firebaseUid: token.uid }, { email }]
+      OR: [{ googleSubject: identity.sub }, { email }]
     }
   });
 
@@ -274,23 +280,23 @@ export async function syncSessionFromToken(token: DecodedIdToken, input: Session
     ? await prisma.user.update({
         where: { id: existingUser.id },
         data: {
-          firebaseUid: token.uid,
+          googleSubject: identity.sub,
           email,
-          displayName: token.name ?? existingUser.displayName,
-          photoUrl: token.picture ?? existingUser.photoUrl,
-          phoneNumber: input.phoneNumber ?? token.phone_number ?? existingUser.phoneNumber,
+          displayName: identity.name ?? existingUser.displayName,
+          photoUrl: identity.picture ?? existingUser.photoUrl,
+          phoneNumber: input.phoneNumber ?? existingUser.phoneNumber,
           walletAddress: input.walletAddress ?? existingUser.walletAddress,
           country: input.country ?? existingUser.country
         }
       })
     : await prisma.user.create({
         data: {
-          firebaseUid: token.uid,
+          googleSubject: identity.sub,
           email,
-          displayName: token.name,
-          photoUrl: token.picture,
-          phoneNumber: input.phoneNumber ?? token.phone_number,
-          walletAddress: input.walletAddress ?? fallbackWalletAddress(token.uid),
+          displayName: identity.name ?? null,
+          photoUrl: identity.picture ?? null,
+          phoneNumber: input.phoneNumber ?? null,
+          walletAddress: input.walletAddress ?? fallbackWalletAddress(identity.sub),
           country: input.country ?? "US"
         }
       });
@@ -304,9 +310,9 @@ export async function syncSessionFromToken(token: DecodedIdToken, input: Session
   return { user: serializeUser(refreshedUser) };
 }
 
-export async function getCurrentUserByFirebaseUid(firebaseUid: string) {
+export async function getCurrentUserByGoogleSubject(googleSubject: string) {
   const user = await prisma.user.findUnique({
-    where: { firebaseUid }
+    where: { googleSubject }
   });
 
   if (!user) {

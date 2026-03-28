@@ -418,7 +418,6 @@ class _ExchangeRateTicker extends StatelessWidget {
     );
   }
 }
-
 class _RecentTransactions extends StatelessWidget {
   const _RecentTransactions({required this.transactions});
 
@@ -648,12 +647,14 @@ class _BottomNavBar extends StatelessWidget {
             ),
             GestureDetector(
               onTap: () async {
+                AppDataService().clear();
                 await AuthService().logout();
               },
               child: const _NavItem(
                 icon: Icons.logout_rounded,
                 label: 'Logout',
                 isActive: false,
+              ),
             ),
           ],
         ),

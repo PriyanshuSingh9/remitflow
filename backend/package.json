@@ -4,14 +4,14 @@
   "version": "0.1.0",
   "description": "Backend database setup for RemitFlow",
   "scripts": {
-    "dev": "tsx --watch src/server.ts",
+    "dev": "tsx src/server.ts",
+    "dev:watch": "tsx watch src/server.ts",
     "start": "tsx src/server.ts",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
-    "db:seed": "tsx prisma/seed.ts",
-    "dev": "tsx watch src/index.ts"
+    "db:seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/adapter-neon": "^7.5.0",
@@ -19,7 +19,6 @@
     "cors": "^2.8.6",
     "dotenv": "^16.4.7",
     "express": "^5.2.1",
-    "firebase-admin": "^13.5.0",
     "google-auth-library": "^10.6.2",
     "jsonwebtoken": "^9.0.3"
   },

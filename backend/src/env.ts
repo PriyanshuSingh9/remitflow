@@ -10,15 +10,8 @@ function read(name: string): string | undefined {
 export const env = {
   port: Number(read("PORT") ?? DEFAULT_PORT),
   enableDemoBootstrap: (read("ENABLE_DEMO_BOOTSTRAP") ?? "true").toLowerCase() !== "false",
-  firebaseProjectId: read("FIREBASE_PROJECT_ID"),
-  firebaseClientEmail: read("FIREBASE_CLIENT_EMAIL"),
-  firebasePrivateKey: read("FIREBASE_PRIVATE_KEY")?.replace(/\\n/g, "\n")
+  googleClientId:
+    read("GOOGLE_CLIENT_ID") ??
+    "612184936512-j4tl40a3lmd793k0cirue0t2lca8660k.apps.googleusercontent.com",
+  jwtSecret: read("JWT_SECRET") ?? "super_secret_dev_key_for_remitflow"
 };
-
-export function assertFirebaseEnv() {
-  if (!env.firebaseProjectId || !env.firebaseClientEmail || !env.firebasePrivateKey) {
-    throw new Error(
-      "Missing Firebase admin environment. Set FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, and FIREBASE_PRIVATE_KEY."
-    );
-  }
-}

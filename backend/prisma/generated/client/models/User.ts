@@ -38,7 +38,7 @@ export type UserSumAggregateOutputType = {
 
 export type UserMinAggregateOutputType = {
   id: string | null
-  firebaseUid: string | null
+  googleSubject: string | null
   email: string | null
   displayName: string | null
   photoUrl: string | null
@@ -54,7 +54,7 @@ export type UserMinAggregateOutputType = {
 
 export type UserMaxAggregateOutputType = {
   id: string | null
-  firebaseUid: string | null
+  googleSubject: string | null
   email: string | null
   displayName: string | null
   photoUrl: string | null
@@ -70,7 +70,7 @@ export type UserMaxAggregateOutputType = {
 
 export type UserCountAggregateOutputType = {
   id: number
-  firebaseUid: number
+  googleSubject: number
   email: number
   displayName: number
   photoUrl: number
@@ -98,7 +98,7 @@ export type UserSumAggregateInputType = {
 
 export type UserMinAggregateInputType = {
   id?: true
-  firebaseUid?: true
+  googleSubject?: true
   email?: true
   displayName?: true
   photoUrl?: true
@@ -114,7 +114,7 @@ export type UserMinAggregateInputType = {
 
 export type UserMaxAggregateInputType = {
   id?: true
-  firebaseUid?: true
+  googleSubject?: true
   email?: true
   displayName?: true
   photoUrl?: true
@@ -130,7 +130,7 @@ export type UserMaxAggregateInputType = {
 
 export type UserCountAggregateInputType = {
   id?: true
-  firebaseUid?: true
+  googleSubject?: true
   email?: true
   displayName?: true
   photoUrl?: true
@@ -233,7 +233,7 @@ export type UserGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
 
 export type UserGroupByOutputType = {
   id: string
-  firebaseUid: string | null
+  googleSubject: string | null
   email: string
   displayName: string | null
   photoUrl: string | null
@@ -272,7 +272,7 @@ export type UserWhereInput = {
   OR?: Prisma.UserWhereInput[]
   NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   id?: Prisma.UuidFilter<"User"> | string
-  firebaseUid?: Prisma.StringNullableFilter<"User"> | string | null
+  googleSubject?: Prisma.StringNullableFilter<"User"> | string | null
   email?: Prisma.StringFilter<"User"> | string
   displayName?: Prisma.StringNullableFilter<"User"> | string | null
   photoUrl?: Prisma.StringNullableFilter<"User"> | string | null
@@ -290,7 +290,7 @@ export type UserWhereInput = {
 
 export type UserOrderByWithRelationInput = {
   id?: Prisma.SortOrder
-  firebaseUid?: Prisma.SortOrderInput | Prisma.SortOrder
+  googleSubject?: Prisma.SortOrderInput | Prisma.SortOrder
   email?: Prisma.SortOrder
   displayName?: Prisma.SortOrderInput | Prisma.SortOrder
   photoUrl?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -308,7 +308,7 @@ export type UserOrderByWithRelationInput = {
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
   id?: string
-  firebaseUid?: string
+  googleSubject?: string
   email?: string
   walletAddress?: string
   AND?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
@@ -325,11 +325,11 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   sentTransactions?: Prisma.TransactionListRelationFilter
   receivedTransactions?: Prisma.TransactionListRelationFilter
-}, "id" | "firebaseUid" | "email" | "walletAddress">
+}, "id" | "googleSubject" | "email" | "walletAddress">
 
 export type UserOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
-  firebaseUid?: Prisma.SortOrderInput | Prisma.SortOrder
+  googleSubject?: Prisma.SortOrderInput | Prisma.SortOrder
   email?: Prisma.SortOrder
   displayName?: Prisma.SortOrderInput | Prisma.SortOrder
   photoUrl?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -353,7 +353,7 @@ export type UserScalarWhereWithAggregatesInput = {
   OR?: Prisma.UserScalarWhereWithAggregatesInput[]
   NOT?: Prisma.UserScalarWhereWithAggregatesInput | Prisma.UserScalarWhereWithAggregatesInput[]
   id?: Prisma.UuidWithAggregatesFilter<"User"> | string
-  firebaseUid?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  googleSubject?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   email?: Prisma.StringWithAggregatesFilter<"User"> | string
   displayName?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   photoUrl?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
@@ -369,7 +369,7 @@ export type UserScalarWhereWithAggregatesInput = {
 
 export type UserCreateInput = {
   id?: string
-  firebaseUid?: string | null
+  googleSubject?: string | null
   email: string
   displayName?: string | null
   photoUrl?: string | null
@@ -387,7 +387,7 @@ export type UserCreateInput = {
 
 export type UserUncheckedCreateInput = {
   id?: string
-  firebaseUid?: string | null
+  googleSubject?: string | null
   email: string
   displayName?: string | null
   photoUrl?: string | null
@@ -405,7 +405,7 @@ export type UserUncheckedCreateInput = {
 
 export type UserUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  firebaseUid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.StringFieldUpdateOperationsInput | string
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   photoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -423,7 +423,7 @@ export type UserUpdateInput = {
 
 export type UserUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  firebaseUid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.StringFieldUpdateOperationsInput | string
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   photoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -441,7 +441,7 @@ export type UserUncheckedUpdateInput = {
 
 export type UserCreateManyInput = {
   id?: string
-  firebaseUid?: string | null
+  googleSubject?: string | null
   email: string
   displayName?: string | null
   photoUrl?: string | null
@@ -457,7 +457,7 @@ export type UserCreateManyInput = {
 
 export type UserUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  firebaseUid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.StringFieldUpdateOperationsInput | string
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   photoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -473,7 +473,7 @@ export type UserUpdateManyMutationInput = {
 
 export type UserUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  firebaseUid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.StringFieldUpdateOperationsInput | string
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   photoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -489,7 +489,7 @@ export type UserUncheckedUpdateManyInput = {
 
 export type UserCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  firebaseUid?: Prisma.SortOrder
+  googleSubject?: Prisma.SortOrder
   email?: Prisma.SortOrder
   displayName?: Prisma.SortOrder
   photoUrl?: Prisma.SortOrder
@@ -510,7 +510,7 @@ export type UserAvgOrderByAggregateInput = {
 
 export type UserMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  firebaseUid?: Prisma.SortOrder
+  googleSubject?: Prisma.SortOrder
   email?: Prisma.SortOrder
   displayName?: Prisma.SortOrder
   photoUrl?: Prisma.SortOrder
@@ -526,7 +526,7 @@ export type UserMaxOrderByAggregateInput = {
 
 export type UserMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  firebaseUid?: Prisma.SortOrder
+  googleSubject?: Prisma.SortOrder
   email?: Prisma.SortOrder
   displayName?: Prisma.SortOrder
   photoUrl?: Prisma.SortOrder
@@ -600,7 +600,7 @@ export type UserUpdateOneRequiredWithoutReceivedTransactionsNestedInput = {
 
 export type UserCreateWithoutSentTransactionsInput = {
   id?: string
-  firebaseUid?: string | null
+  googleSubject?: string | null
   email: string
   displayName?: string | null
   photoUrl?: string | null
@@ -617,7 +617,7 @@ export type UserCreateWithoutSentTransactionsInput = {
 
 export type UserUncheckedCreateWithoutSentTransactionsInput = {
   id?: string
-  firebaseUid?: string | null
+  googleSubject?: string | null
   email: string
   displayName?: string | null
   photoUrl?: string | null
@@ -639,7 +639,7 @@ export type UserCreateOrConnectWithoutSentTransactionsInput = {
 
 export type UserCreateWithoutReceivedTransactionsInput = {
   id?: string
-  firebaseUid?: string | null
+  googleSubject?: string | null
   email: string
   displayName?: string | null
   photoUrl?: string | null
@@ -656,7 +656,7 @@ export type UserCreateWithoutReceivedTransactionsInput = {
 
 export type UserUncheckedCreateWithoutReceivedTransactionsInput = {
   id?: string
-  firebaseUid?: string | null
+  googleSubject?: string | null
   email: string
   displayName?: string | null
   photoUrl?: string | null
@@ -689,7 +689,7 @@ export type UserUpdateToOneWithWhereWithoutSentTransactionsInput = {
 
 export type UserUpdateWithoutSentTransactionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  firebaseUid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.StringFieldUpdateOperationsInput | string
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   photoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -706,7 +706,7 @@ export type UserUpdateWithoutSentTransactionsInput = {
 
 export type UserUncheckedUpdateWithoutSentTransactionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  firebaseUid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.StringFieldUpdateOperationsInput | string
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   photoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -734,7 +734,7 @@ export type UserUpdateToOneWithWhereWithoutReceivedTransactionsInput = {
 
 export type UserUpdateWithoutReceivedTransactionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  firebaseUid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.StringFieldUpdateOperationsInput | string
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   photoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -751,7 +751,7 @@ export type UserUpdateWithoutReceivedTransactionsInput = {
 
 export type UserUncheckedUpdateWithoutReceivedTransactionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  firebaseUid?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  googleSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   email?: Prisma.StringFieldUpdateOperationsInput | string
   displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   photoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -808,7 +808,7 @@ export type UserCountOutputTypeCountReceivedTransactionsArgs<ExtArgs extends run
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  firebaseUid?: boolean
+  googleSubject?: boolean
   email?: boolean
   displayName?: boolean
   photoUrl?: boolean
@@ -827,7 +827,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
 
 export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  firebaseUid?: boolean
+  googleSubject?: boolean
   email?: boolean
   displayName?: boolean
   photoUrl?: boolean
@@ -843,7 +843,7 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
 
 export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  firebaseUid?: boolean
+  googleSubject?: boolean
   email?: boolean
   displayName?: boolean
   photoUrl?: boolean
@@ -859,7 +859,7 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
 
 export type UserSelectScalar = {
   id?: boolean
-  firebaseUid?: boolean
+  googleSubject?: boolean
   email?: boolean
   displayName?: boolean
   photoUrl?: boolean
@@ -873,7 +873,7 @@ export type UserSelectScalar = {
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "firebaseUid" | "email" | "displayName" | "photoUrl" | "phoneNumber" | "walletAddress" | "country" | "bankDetails" | "availableBalanceUsd" | "lifetimeSavingsUsd" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "googleSubject" | "email" | "displayName" | "photoUrl" | "phoneNumber" | "walletAddress" | "country" | "bankDetails" | "availableBalanceUsd" | "lifetimeSavingsUsd" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   sentTransactions?: boolean | Prisma.User$sentTransactionsArgs<ExtArgs>
   receivedTransactions?: boolean | Prisma.User$receivedTransactionsArgs<ExtArgs>
@@ -890,7 +890,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
-    firebaseUid: string | null
+    googleSubject: string | null
     email: string
     displayName: string | null
     photoUrl: string | null
@@ -1328,7 +1328,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
  */
 export interface UserFieldRefs {
   readonly id: Prisma.FieldRef<"User", 'String'>
-  readonly firebaseUid: Prisma.FieldRef<"User", 'String'>
+  readonly googleSubject: Prisma.FieldRef<"User", 'String'>
   readonly email: Prisma.FieldRef<"User", 'String'>
   readonly displayName: Prisma.FieldRef<"User", 'String'>
   readonly photoUrl: Prisma.FieldRef<"User", 'String'>

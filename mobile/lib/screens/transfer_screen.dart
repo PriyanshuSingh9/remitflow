@@ -16,7 +16,9 @@ class TransferScreen extends StatefulWidget {
 }
 
 class _TransferScreenState extends State<TransferScreen> {
-  final TextEditingController _amountController = TextEditingController(text: '0');
+  final TextEditingController _amountController = TextEditingController(
+    text: '0',
+  );
   final TextEditingController _searchController = TextEditingController();
   Timer? _searchDebounce;
   String? _selectedRecipientId;
@@ -115,7 +117,10 @@ class _TransferScreenState extends State<TransferScreen> {
         final selectedRecipient = _findRecipient(recipients);
         final amount = double.tryParse(_amountController.text.trim()) ?? 0;
         final canSubmit =
-            selectedRecipient != null && amount > 0 && amount <= currentBalance && !appData.isTransferSubmitting;
+            selectedRecipient != null &&
+            amount > 0 &&
+            amount <= currentBalance &&
+            !appData.isTransferSubmitting;
 
         return Scaffold(
           backgroundColor: AppTheme.surfaceContainerLowest,
@@ -123,7 +128,11 @@ class _TransferScreenState extends State<TransferScreen> {
             backgroundColor: Colors.transparent,
             elevation: 0,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppTheme.onSurface, size: 20),
+              icon: const Icon(
+                Icons.arrow_back_ios_new_rounded,
+                color: AppTheme.onSurface,
+                size: 20,
+              ),
               onPressed: () => Navigator.pop(context),
             ),
             title: Text(
@@ -141,7 +150,10 @@ class _TransferScreenState extends State<TransferScreen> {
               children: [
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 16,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
@@ -163,7 +175,10 @@ class _TransferScreenState extends State<TransferScreen> {
                             IntrinsicWidth(
                               child: TextField(
                                 controller: _amountController,
-                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                      decimal: true,
+                                    ),
                                 style: GoogleFonts.newsreader(
                                   fontSize: 64,
                                   fontWeight: FontWeight.w400,
@@ -217,7 +232,10 @@ class _TransferScreenState extends State<TransferScreen> {
                         ),
                         const SizedBox(height: 16),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: AppTheme.surfaceContainerLow,
                             borderRadius: BorderRadius.circular(16),
@@ -229,10 +247,16 @@ class _TransferScreenState extends State<TransferScreen> {
                               color: AppTheme.onSurface,
                             ),
                             decoration: InputDecoration(
-                              icon: const Icon(Icons.search_rounded, color: AppTheme.onSurfaceVariant, size: 20),
+                              icon: const Icon(
+                                Icons.search_rounded,
+                                color: AppTheme.onSurfaceVariant,
+                                size: 20,
+                              ),
                               hintText: 'Name, email, or phone',
                               hintStyle: GoogleFonts.plusJakartaSans(
-                                color: AppTheme.onSurfaceVariant.withOpacity(0.7),
+                                color: AppTheme.onSurfaceVariant.withOpacity(
+                                  0.7,
+                                ),
                               ),
                               border: InputBorder.none,
                             ),
@@ -242,12 +266,16 @@ class _TransferScreenState extends State<TransferScreen> {
                         if (appData.isRecipientsLoading)
                           const Padding(
                             padding: EdgeInsets.symmetric(vertical: 24),
-                            child: CircularProgressIndicator(color: AppTheme.vaultGreen),
+                            child: CircularProgressIndicator(
+                              color: AppTheme.vaultGreen,
+                            ),
                           )
                         else if (appData.recipientsErrorMessage != null)
                           _RecipientsError(
                             message: appData.recipientsErrorMessage!,
-                            onRetry: () => appData.searchRecipients(_searchController.text),
+                            onRetry: () => appData.searchRecipients(
+                              _searchController.text,
+                            ),
                           )
                         else if (recipients.isEmpty)
                           _EmptyRecipients(query: _searchController.text)
@@ -257,17 +285,23 @@ class _TransferScreenState extends State<TransferScreen> {
                             child: ListView.separated(
                               scrollDirection: Axis.horizontal,
                               itemCount: recipients.length,
-                              separatorBuilder: (_, __) => const SizedBox(width: 16),
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(width: 16),
                               itemBuilder: (context, index) {
                                 final recipient = recipients[index];
-                                final isSelected = recipient.id == _selectedRecipientId;
+                                final isSelected =
+                                    recipient.id == _selectedRecipientId;
                                 return GestureDetector(
                                   onTap: () {
                                     setState(() {
                                       _selectedRecipientId = recipient.id;
-                                      _amountController.selection = TextSelection.fromPosition(
-                                        TextPosition(offset: _amountController.text.length),
-                                      );
+                                      _amountController.selection =
+                                          TextSelection.fromPosition(
+                                            TextPosition(
+                                              offset:
+                                                  _amountController.text.length,
+                                            ),
+                                          );
                                     });
                                   },
                                   child: _RecipientCard(
@@ -367,7 +401,9 @@ class _TransferScreenState extends State<TransferScreen> {
                                 fontWeight: FontWeight.w800,
                                 color: canSubmit
                                     ? const Color(0xFF1A1C1C)
-                                    : AppTheme.onSurfaceVariant.withOpacity(0.5),
+                                    : AppTheme.onSurfaceVariant.withOpacity(
+                                        0.5,
+                                      ),
                                 letterSpacing: 2,
                               ),
                             ),
@@ -384,18 +420,16 @@ class _TransferScreenState extends State<TransferScreen> {
 }
 
 class _RecipientCard extends StatelessWidget {
-  const _RecipientCard({
-    required this.recipient,
-    required this.isSelected,
-  });
+  const _RecipientCard({required this.recipient, required this.isSelected});
 
   final RecipientSummary recipient;
   final bool isSelected;
 
   @override
   Widget build(BuildContext context) {
-    final initial =
-        recipient.preferredName.isNotEmpty ? recipient.preferredName[0].toUpperCase() : 'R';
+    final initial = recipient.preferredName.isNotEmpty
+        ? recipient.preferredName[0].toUpperCase()
+        : 'R';
 
     return Container(
       width: 88,
@@ -406,12 +440,16 @@ class _RecipientCard extends StatelessWidget {
             padding: EdgeInsets.all(isSelected ? 3 : 0),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: isSelected ? Border.all(color: AppTheme.vaultGreen, width: 2) : null,
+              border: isSelected
+                  ? Border.all(color: AppTheme.vaultGreen, width: 2)
+                  : null,
             ),
             child: CircleAvatar(
               radius: isSelected ? 27 : 30,
               backgroundColor: AppTheme.surfaceContainer,
-              backgroundImage: recipient.photoUrl != null ? NetworkImage(recipient.photoUrl!) : null,
+              backgroundImage: recipient.photoUrl != null
+                  ? NetworkImage(recipient.photoUrl!)
+                  : null,
               child: recipient.photoUrl == null
                   ? Text(
                       initial,
@@ -431,7 +469,9 @@ class _RecipientCard extends StatelessWidget {
             style: GoogleFonts.plusJakartaSans(
               fontSize: 12,
               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-              color: isSelected ? AppTheme.onSurface : AppTheme.onSurfaceVariant,
+              color: isSelected
+                  ? AppTheme.onSurface
+                  : AppTheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 4),
@@ -446,10 +486,7 @@ class _RecipientCard extends StatelessWidget {
 }
 
 class _RecipientsError extends StatelessWidget {
-  const _RecipientsError({
-    required this.message,
-    required this.onRetry,
-  });
+  const _RecipientsError({required this.message, required this.onRetry});
 
   final String message;
   final VoidCallback onRetry;
@@ -475,10 +512,7 @@ class _RecipientsError extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          TextButton(
-            onPressed: onRetry,
-            child: const Text('Retry search'),
-          ),
+          TextButton(onPressed: onRetry, child: const Text('Retry search')),
         ],
       ),
     );

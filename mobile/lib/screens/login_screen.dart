@@ -123,7 +123,9 @@ class LoginScreen extends StatelessWidget {
                         foregroundColor: AppTheme.onSurface,
                         padding: const EdgeInsets.symmetric(vertical: 18),
                         elevation: 0.5,
-                        side: BorderSide(color: AppTheme.outlineVariant.withOpacity(0.5)),
+                        side: BorderSide(
+                          color: AppTheme.outlineVariant.withOpacity(0.5),
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(9999),
                         ),
@@ -178,7 +180,9 @@ class LoginScreen extends StatelessWidget {
                 child: Container(
                   color: Colors.black45,
                   child: const Center(
-                    child: CircularProgressIndicator(color: AppTheme.vaultGreen),
+                    child: CircularProgressIndicator(
+                      color: AppTheme.vaultGreen,
+                    ),
                   ),
                 ),
               );

@@ -1,0 +1,1 @@
+src/prisma.ts(3,30): error TS2307: Cannot find module '../prisma/generated/client/client' or its corresponding type declarations.

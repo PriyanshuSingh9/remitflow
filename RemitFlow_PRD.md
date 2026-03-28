@@ -12,8 +12,9 @@
 | Blockchain SDK | web3dart (Flutter package) | Talks to Polygon RPC |
 | On-Ramp | Transak API | USD → USDC via WebView widget |
 | Off-Ramp | OnMeta API | USDC → INR to bank/UPI |
-| DEX / Liquidity | Polygon native AMM DEX (QuickSwap) | No own liquidity pool — use DEX |
-| Database | Firebase Firestore | Transaction history, user profiles |
+| Smart Contract | RemitFlow Escrow (Solidity) | Locks USDC until off-ramp completes |
+| Database | Neon (PostgreSQL) + Prisma | Transaction history, user profiles |
+| Backend API | Express.js (Node.js) | Manages escrow, DB sync, Google Auth verification |
 
 ---
 
@@ -25,10 +26,11 @@ Step 2 — App shows live preview: USDC equivalent, INR receiver gets, fee break
 Step 3 — User A confirms → Transak WebView opens inside app
 Step 4 — Transak converts USD → USDC, deposits to User A's deterministic local wallet on Polygon
 Step 5 — RemitFlow smart contract receives USDC from User A wallet
-Step 6 — Smart contract routes USDC through Polygon DEX to User B wallet
-Step 7 — OnMeta detects USDC in User B wallet, converts USDC → INR
-Step 8 — INR credited to User B's bank account or UPI (instant via UPI)
-Step 9 — Both users get push notification. Tx hash visible on Polygon Scan Explorer.
+Step 6 — Sender or Operator deposits USDC to RemitFlowEscrow smart contract
+Step 7 — Backend listens (using ethers.js) and triggers OnMeta off-ramp initialization
+Step 8 — OnMeta confirms off-ramp readiness, backend releases escrow to off-ramp wallet
+Step 9 — INR credited to User B's bank account or UPI (instant via UPI)
+Step 10 — Both users get push notification. Tx hash visible on Polygon Scan Explorer.
 ```
 
 ---
@@ -36,28 +38,26 @@ Step 9 — Both users get push notification. Tx hash visible on Polygon Scan Exp
 ## 4. Smart Contract Specification
 
 ### What It Does
-- Receives USDC from sender's local wallet
-- Routes through Polygon DEX AMM (QuickSwap)
-- Transfers USDC to receiver's wallet
-- Emits a `Transfer` event (sender, receiver, amount, timestamp)
-- Reverts if sender balance is insufficient
-- Non-custodial: never holds funds beyond execution
+- Conditional escrow for cross-border remittances
+- Receives USDC from sender's local wallet or via operator
+- Escrows funds until backend confirms off-ramp readiness
+- Releases funds to off-ramp provider when ready
+- Refunds funds to sender if off-ramp times out (24 hours) or fails
+- Emits `EscrowDeposited`, `EscrowReadyForFunding`, `EscrowReleased`, and `EscrowRefunded` events
 
 ### Deployment
 - Written in Solidity 0.8.x
 - Deployed via Foundry (Forge)
 - Network: Polygon Amoy Testnet
 - Foundry uses Polygon RPC for deployment scripts and verification
-- ABI and contract address stored in Firestore or accessed locally, referenced in Flutter app
+- ABI and contract address stored in backend or accessed locally, referenced in Flutter app
 
 ### Events to Emit
-```
-event Transfer(
-    address indexed sender,
-    address indexed receiver,
-    uint256 usdcAmount,
-    uint256 timestamp
-);
+```solidity
+event EscrowDeposited(uint256 indexed escrowId, address indexed sender, address indexed receiver, uint256 amount, uint256 timestamp);
+event EscrowReadyForFunding(uint256 indexed escrowId, uint256 timestamp);
+event EscrowReleased(uint256 indexed escrowId, address indexed receiver, uint256 amount, uint256 timestamp);
+event EscrowRefunded(uint256 indexed escrowId, address indexed sender, uint256 amount, uint256 timestamp);
 ```
 
 ---
@@ -159,8 +159,8 @@ Build the following screens in order:
 - On success: close WebView, proceed to transfer progress screen
 
 ### 6.2 OnMeta (Off-Ramp)
-- Integration: REST API called from Flutter/backend when smart contract Transfer event fires
-- Trigger: listen for Transfer event on Polygon using `web3dart` event subscription
+- Integration: REST API called from Express backend when smart contract `EscrowDeposited` event fires
+- Trigger: Backend listens for events on Polygon Amoy testnet using `ethers.js`
 - API call: POST to OnMeta off-ramp endpoint with:
   - USDC amount received
   - User B's bank account or UPI handle
@@ -168,49 +168,44 @@ Build the following screens in order:
 - OnMeta handles conversion and bank credit
 - Use OnMeta sandbox for hackathon demo
 
-### 6.3 Firebase Auth + Local Deterministic Wallet
-- Package: `firebase_auth`, `google_sign_in`, `crypto`, `flutter_secure_storage`
-- Init with Firebase Google Sign-In config.
-- After login: Firebase provides a `uid`. The app hashes this `uid` with HMAC-SHA256 to generate a 256-bit wallet private key.
+### 6.3 Google OAuth + Local Deterministic Wallet
+- Package: `google_sign_in`, `crypto`, `flutter_secure_storage`, `google-auth-library` in backend
+- Init with Google Sign-In config.
+- After login: App receives an ID token. The app hashes the Google `uid` with HMAC-SHA256 to generate a 256-bit wallet private key.
 - Private key is stored securely in `flutter_secure_storage`.
-- The derived EVM wallet address and user profile metadata are pushed to Firestore `users` collection.
-- Use the local private key directly to sign transactions via `web3dart`.
+- The derived EVM wallet address and user profile are pushed to the Neon database via the Express backend using JWT auth.
+- Use the local private key directly to sign transactions locally before broadcasting.
 
 ---
 
-## 7. Firestore Database Schema
+## 7. Neon (PostgreSQL) Database Schema
 
-### Collection: `users`
-**Document ID:** `uid` (Firebase UID)
-```json
-{
-  "email": "user@gmail.com",
-  "name": "Jane Doe",
-  "photoUrl": "https://...",
-  "walletAddress": "0xABC123...",
-  "country": "IN",
-  "bank_details": "{... encrypted JSON ...}",
-  "createdAt": "2026-03-27T10:00:00Z",
-  "lastLogin": "timestamp"
-}
-```
+Defined via Prisma (`schema.prisma`):
 
-### Collection: `transactions`
-**Document ID:** auto-generated
-```json
-{
-  "sender_id": "uidA",
-  "receiver_id": "uidB",
-  "amount_usd": 1000.00,
-  "amount_usdc": 995.50,
-  "amount_inr": 82000.00,
-  "fee_usd": 4.50,
-  "tx_hash": "0x444...",
-  "status": "pending", // pending | on_chain | off_ramp | completed | failed
-  "created_at": "timestamp",
-  "completed_at": "timestamp"
-}
-```
+### Model: `User` (table: `users`)
+- `id`: UUID (Primary Key)
+- `googleSubject`: String (Unique)
+- `email`: String (Unique)
+- `displayName`: String
+- `photoUrl`: String
+- `walletAddress`: String (Unique)
+- `country`: String (default: "US")
+- `bankDetails`: String
+
+### Model: `Transaction` (table: `transactions`)
+- `id`: UUID (Primary Key)
+- `senderId`, `receiverId`: UUID (Relations to `User`)
+- `amountUsd`, `amountUsdc`, `amountInr`, `feeUsd`: Decimal
+- `txHash`, `escrowTxHash`, `releaseTxHash`: String
+- `escrowId`: Int
+- `status`: Enum (`pending | escrow_locked | offramp_pending | offramp_ready | escrow_released | completed | failed | refunded`)
+
+### Model: `RampOrder` (table: `ramp_orders`)
+- `id`: UUID (Primary Key)
+- `type`: String (`onramp` | `offramp`)
+- `transactionId`: UUID (Relation to `Transaction`)
+- `externalOrderId`: String (Unique)
+- `status`: String
 
 ---
 
@@ -281,16 +276,16 @@ What to show judges (in order):
 
 Build in this exact order to avoid blockers:
 
-1. **Smart Contract** — Write and deploy on Polygon Amoy via Foundry. Get ABI + address.
-2. **Flutter Init** — Create Flutter project. Add all dependencies to `pubspec.yaml`.
-3. **Firebase Auth & Wallet** — Integrate Google Sign In & HMAC-SHA256 deterministic key generation. Store secure keys and push user to Firestore.
-4. **web3dart** — Connect to Polygon RPC. Read generated wallet USDC balance. Call contract.
+1. **Smart Contract** — Write Escrow logic and deploy on Polygon Amoy via Foundry. Get ABI + address.
+2. **Flutter & Express Init** — Create Flutter and Backend projects. Add dependencies.
+3. **Google Auth & Wallet** — Integrate Google Sign In & HMAC-SHA256 deterministic key generation. Store secure keys and push user to Postgres.
+4. **web3dart & ethers.js** — Connect to Polygon RPC. Set up backend ethers listener. Read generated wallet USDC balance. Call Escrow contract.
 5. **Transak WebView** — Embed widget. Test USD → USDC on testnet.
-6. **OnMeta** — Integrate off-ramp API. Test in sandbox.
-7. **Firestore Database** — Store and sync transaction history.
+6. **OnMeta** — Integrate off-ramp API triggered by backend on Escrow deposit. Test in sandbox.
+7. **Neon Database** — Store and sync transaction history using Prisma.
 8. **All Screens** — Build UI in order from Section 5.
-9. **FCM Notifications** — Add Firebase Messaging, wire up triggers.
-10. **End-to-End Test** — Full flow on Polygon Amoy testnet. Confirm PolygonScan shows tx.
+9. **FCM Notifications** — Add Firebase Messaging, wire up triggers from backend.
+10. **End-to-End Test** — Full conditional flow on Polygon Amoy testnet. Confirm PolygonScan shows escrow deposit and release.
 
 ---
 
@@ -350,6 +345,6 @@ ONMETA_API_KEY=<your OnMeta API key>
 - **Polygon only** — no other blockchain. All on-chain activity on Polygon Amoy Testnet.
 - **No own liquidity pool** — route through Polygon DEX (QuickSwap). RemitFlow holds zero USDC.
 - **Foundry for Smart Contracts** — No Remix IDE or Hardhat.
-- **Firebase Auth & Firestore** — Used for all backend, authentication, and database actions.
-- **Firebase + Deterministic Wallet** — Used instead of MetaMask or any external Web3-focused providers to retain full seamless abstraction.
+- **Node.js, Express & Neon PostgreSQL** — Used for all backend, authentication (Google OAuth2 + JWT), and database actions (Prisma).
+- **Google OAuth + Deterministic Wallet** — Used instead of MetaMask or any external Web3-focused providers to retain full seamless abstraction.
 - **Flutter only** — no Next.js or web frontend.

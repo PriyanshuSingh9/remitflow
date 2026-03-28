@@ -6,7 +6,6 @@ import '../theme/app_theme.dart';
 import 'transfer_screen.dart';
 import 'settings_screen.dart';
 import '../services/auth_service.dart';
-import '../services/neon_service.dart';
 import '../services/exchange_rate_service.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -174,22 +173,12 @@ class _BalanceHeroWithMeshState extends State<_BalanceHeroWithMesh> {
   }
 
   Future<void> _fetchBalance() async {
-    final email = AuthService().userEmail;
-    if (email != null) {
-      final amount = await NeonService().getAmountTransferred(email);
-      if (mounted) {
-        setState(() {
-          _balance = amount;
-          _isLoading = false;
-        });
-      }
-    } else {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+    if (!mounted) {
+      return;
     }
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   @override

@@ -90,26 +90,6 @@ function roundCrypto(value: number): number {
   return Number(value.toFixed(8));
 }
 
-async function ensureExchangeRate() {
-  return prisma.exchangeRate.upsert({
-    where: {
-      baseCurrency_quoteCurrency: {
-        baseCurrency: USD_INR_RATE.baseCurrency,
-        quoteCurrency: USD_INR_RATE.quoteCurrency
-      }
-    },
-    update: {
-      rate: USD_INR_RATE.rate,
-      cheaperPercentage: USD_INR_RATE.cheaperPercentage,
-      asOf: new Date()
-    },
-    create: {
-      ...USD_INR_RATE,
-      asOf: new Date()
-    }
-  });
-}
-
 async function ensureDemoRecipients() {
   return Promise.all(
     DEMO_RECIPIENTS.map((recipient) =>
@@ -267,8 +247,6 @@ function serializeTransaction(
 }
 
 export async function syncSessionFromGoogleIdentity(identity: GoogleIdentity, input: SessionInput) {
-  await ensureExchangeRate();
-
   const email = requireEmail(identity);
   const existingUser = await prisma.user.findFirst({
     where: {
@@ -323,19 +301,9 @@ export async function getCurrentUserByGoogleSubject(googleSubject: string) {
 }
 
 export async function getDashboard(currentUserId: string) {
-  await ensureExchangeRate();
-
-  const [user, exchangeRate, recentTransactions] = await Promise.all([
+  const [user, recentTransactions] = await Promise.all([
     prisma.user.findUniqueOrThrow({
       where: { id: currentUserId }
-    }),
-    prisma.exchangeRate.findUniqueOrThrow({
-      where: {
-        baseCurrency_quoteCurrency: {
-          baseCurrency: USD_INR_RATE.baseCurrency,
-          quoteCurrency: USD_INR_RATE.quoteCurrency
-        }
-      }
     }),
     prisma.transaction.findMany({
       where: {
@@ -355,11 +323,11 @@ export async function getDashboard(currentUserId: string) {
   return {
     user: serializeUser(user),
     exchangeRate: {
-      baseCurrency: exchangeRate.baseCurrency,
-      quoteCurrency: exchangeRate.quoteCurrency,
-      rate: toNumber(exchangeRate.rate) ?? 0,
-      cheaperPercentage: toNumber(exchangeRate.cheaperPercentage) ?? 0,
-      asOf: exchangeRate.asOf.toISOString()
+      baseCurrency: USD_INR_RATE.baseCurrency,
+      quoteCurrency: USD_INR_RATE.quoteCurrency,
+      rate: USD_INR_RATE.rate,
+      cheaperPercentage: USD_INR_RATE.cheaperPercentage,
+      asOf: new Date().toISOString()
     },
     recentTransactions: recentTransactions.map((transaction: any) =>
       serializeTransaction(transaction, currentUserId)
@@ -405,17 +373,9 @@ export async function createTransfer(currentUserId: string, input: TransferInput
   }
 
   const result = await prisma.$transaction(async (tx: any) => {
-    const [sender, recipient, exchangeRate] = await Promise.all([
+    const [sender, recipient] = await Promise.all([
       tx.user.findUnique({ where: { id: currentUserId } }),
-      tx.user.findUnique({ where: { id: input.recipientId } }),
-      tx.exchangeRate.findUnique({
-        where: {
-          baseCurrency_quoteCurrency: {
-            baseCurrency: USD_INR_RATE.baseCurrency,
-            quoteCurrency: USD_INR_RATE.quoteCurrency
-          }
-        }
-      })
+      tx.user.findUnique({ where: { id: input.recipientId } })
     ]);
 
     if (!sender) {
@@ -430,16 +390,12 @@ export async function createTransfer(currentUserId: string, input: TransferInput
       throw new Error("You cannot send money to yourself.");
     }
 
-    if (!exchangeRate) {
-      throw new Error("Exchange rate is unavailable.");
-    }
-
     const senderBalance = toNumber(sender.availableBalanceUsd) ?? 0;
     if (senderBalance < input.amountUsd) {
       throw new Error("Insufficient balance for this transfer.");
     }
 
-    const rate = toNumber(exchangeRate.rate) ?? 0;
+    const rate = USD_INR_RATE.rate;
     const usdToUsdc = 1.0; // 1:1 for mock
     const feeUsd = roundMoney(input.amountUsd * 0.0085);
     const amountUsdc = roundCrypto(Math.max(input.amountUsd - feeUsd, 0));

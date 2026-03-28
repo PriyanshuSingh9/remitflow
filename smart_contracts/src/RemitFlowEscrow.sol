@@ -35,10 +35,10 @@ contract RemitFlowEscrow {
 
     struct Escrow {
         address sender;
-        address receiver;
         uint256 amount;
+        address receiver;
+        uint40 depositTimestamp;
         EscrowState state;
-        uint256 depositTimestamp;
     }
 
     uint256 public nextEscrowId;
@@ -98,13 +98,17 @@ contract RemitFlowEscrow {
         // Pull USDC from operator
         usdc.safeTransferFrom(msg.sender, address(this), amount);
 
-        escrowId = nextEscrowId++;
+        escrowId = nextEscrowId;
+        unchecked {
+            nextEscrowId = escrowId + 1;
+        }
+
         escrows[escrowId] = Escrow({
             sender: sender,
-            receiver: receiver,
             amount: amount,
-            state: EscrowState.Deposited,
-            depositTimestamp: block.timestamp
+            receiver: receiver,
+            depositTimestamp: uint40(block.timestamp),
+            state: EscrowState.Deposited
         });
 
         emit EscrowDeposited(escrowId, sender, receiver, amount, block.timestamp);
@@ -122,13 +126,17 @@ contract RemitFlowEscrow {
         // Pull USDC from the sender
         usdc.safeTransferFrom(msg.sender, address(this), amount);
 
-        escrowId = nextEscrowId++;
+        escrowId = nextEscrowId;
+        unchecked {
+            nextEscrowId = escrowId + 1;
+        }
+
         escrows[escrowId] = Escrow({
             sender: msg.sender,
-            receiver: receiver,
             amount: amount,
-            state: EscrowState.Deposited,
-            depositTimestamp: block.timestamp
+            receiver: receiver,
+            depositTimestamp: uint40(block.timestamp),
+            state: EscrowState.Deposited
         });
 
         emit EscrowDeposited(escrowId, msg.sender, receiver, amount, block.timestamp);
@@ -150,41 +158,53 @@ contract RemitFlowEscrow {
     /// @notice Releases escrowed USDC to the receiver. Only operator can call.
     function releaseEscrow(uint256 escrowId) external onlyOperator {
         Escrow storage e = escrows[escrowId];
-        if (e.amount == 0) revert EscrowNotFound();
-        if (e.state == EscrowState.Released || e.state == EscrowState.Refunded) revert EscrowAlreadySettled();
-        if (e.state != EscrowState.ReadyForFunding) revert InvalidEscrowState();
+        uint256 amount = e.amount;
+        if (amount == 0) revert EscrowNotFound();
+        
+        EscrowState state = e.state;
+        if (state == EscrowState.Released || state == EscrowState.Refunded) revert EscrowAlreadySettled();
+        if (state != EscrowState.ReadyForFunding) revert InvalidEscrowState();
 
         e.state = EscrowState.Released;
-        usdc.safeTransfer(e.receiver, e.amount);
+        address receiver = e.receiver;
+        usdc.safeTransfer(receiver, amount);
 
-        emit EscrowReleased(escrowId, e.receiver, e.amount, block.timestamp);
+        emit EscrowReleased(escrowId, receiver, amount, block.timestamp);
     }
 
     // ─── Refund: off-ramp failed or manual intervention ───────────────
     /// @notice Refunds escrowed USDC back to the sender. Only operator can call.
     function refundEscrow(uint256 escrowId) external onlyOperator {
         Escrow storage e = escrows[escrowId];
-        if (e.amount == 0) revert EscrowNotFound();
-        if (e.state == EscrowState.Released || e.state == EscrowState.Refunded) revert EscrowAlreadySettled();
+        uint256 amount = e.amount;
+        if (amount == 0) revert EscrowNotFound();
+        
+        EscrowState state = e.state;
+        if (state == EscrowState.Released || state == EscrowState.Refunded) revert EscrowAlreadySettled();
 
         e.state = EscrowState.Refunded;
-        usdc.safeTransfer(e.sender, e.amount);
+        address sender = e.sender;
+        usdc.safeTransfer(sender, amount);
 
-        emit EscrowRefunded(escrowId, e.sender, e.amount, block.timestamp);
+        emit EscrowRefunded(escrowId, sender, amount, block.timestamp);
     }
 
     // ─── Timeout Refund: anyone can trigger if timeout exceeded ────────
     /// @notice Refunds escrow if the off-ramp never confirms readiness within ESCROW_TIMEOUT.
     function refundTimedOut(uint256 escrowId) external {
         Escrow storage e = escrows[escrowId];
-        if (e.amount == 0) revert EscrowNotFound();
-        if (e.state != EscrowState.Deposited) revert InvalidEscrowState();
+        uint256 amount = e.amount;
+        if (amount == 0) revert EscrowNotFound();
+        
+        EscrowState state = e.state;
+        if (state != EscrowState.Deposited) revert InvalidEscrowState();
         if (block.timestamp < e.depositTimestamp + ESCROW_TIMEOUT) revert NotTimedOut();
 
         e.state = EscrowState.Refunded;
-        usdc.safeTransfer(e.sender, e.amount);
+        address sender = e.sender;
+        usdc.safeTransfer(sender, amount);
 
-        emit EscrowRefunded(escrowId, e.sender, e.amount, block.timestamp);
+        emit EscrowRefunded(escrowId, sender, amount, block.timestamp);
     }
 }
 

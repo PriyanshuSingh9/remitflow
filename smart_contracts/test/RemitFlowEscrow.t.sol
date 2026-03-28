@@ -80,7 +80,7 @@ contract RemitFlowEscrowTest {
         uint256 id = escrow.operatorDeposit(sender, receiver, 500_000);
 
         // Verify escrow state
-        (address s, address r, uint256 a, RemitFlowEscrow.EscrowState state, uint256 ts) = escrow.escrows(id);
+        (address s, uint256 a, address r, uint40 ts, RemitFlowEscrow.EscrowState state) = escrow.escrows(id);
         assert(s == sender);
         assert(r == receiver);
         assert(a == 500_000);
@@ -141,7 +141,7 @@ contract RemitFlowEscrowTest {
         vm.prank(sender);
         uint256 id = escrow.depositToEscrow(receiver, 750_000);
 
-        (address s, address r, uint256 a, RemitFlowEscrow.EscrowState state, uint256 ts) = escrow.escrows(id);
+        (address s, uint256 a, address r, uint40 ts, RemitFlowEscrow.EscrowState state) = escrow.escrows(id);
         assert(s == sender);
         assert(r == receiver);
         assert(a == 750_000);
@@ -192,7 +192,7 @@ contract RemitFlowEscrowTest {
         vm.prank(operatorAddr);
         escrow.confirmReadyForFunding(id);
 
-        (, , , RemitFlowEscrow.EscrowState state, ) = escrow.escrows(id);
+        (, , , , RemitFlowEscrow.EscrowState state) = escrow.escrows(id);
         assert(state == RemitFlowEscrow.EscrowState.ReadyForFunding);
     }
 
@@ -231,7 +231,7 @@ contract RemitFlowEscrowTest {
         assert(usdc.balanceOf(address(escrow)) == 0);
 
         // Verify escrow settled
-        (, , , RemitFlowEscrow.EscrowState state, ) = escrow.escrows(id);
+        (, , , , RemitFlowEscrow.EscrowState state) = escrow.escrows(id);
         assert(state == RemitFlowEscrow.EscrowState.Released);
     }
 
@@ -295,7 +295,7 @@ contract RemitFlowEscrowTest {
         escrow.refundEscrow(id);
 
         assert(usdc.balanceOf(sender) == 500_000);
-        (, , , RemitFlowEscrow.EscrowState state, ) = escrow.escrows(id);
+        (, , , , RemitFlowEscrow.EscrowState state) = escrow.escrows(id);
         assert(state == RemitFlowEscrow.EscrowState.Refunded);
     }
 
@@ -313,7 +313,7 @@ contract RemitFlowEscrowTest {
         escrow.refundEscrow(id);
 
         assert(usdc.balanceOf(sender) == 500_000);
-        (, , , RemitFlowEscrow.EscrowState state, ) = escrow.escrows(id);
+        (, , , , RemitFlowEscrow.EscrowState state) = escrow.escrows(id);
         assert(state == RemitFlowEscrow.EscrowState.Refunded);
     }
 
@@ -336,7 +336,7 @@ contract RemitFlowEscrowTest {
         escrow.refundTimedOut(id);
 
         assert(usdc.balanceOf(sender) == 500_000);
-        (, , , RemitFlowEscrow.EscrowState state, ) = escrow.escrows(id);
+        (, , , , RemitFlowEscrow.EscrowState state) = escrow.escrows(id);
         assert(state == RemitFlowEscrow.EscrowState.Refunded);
     }
 

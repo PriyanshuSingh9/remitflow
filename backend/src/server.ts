@@ -7,6 +7,7 @@ import {
   createTransfer,
   getCurrentUserByGoogleSubject,
   getDashboard,
+  getReceiverDashboard,
   getTransferDetail,
   searchRecipients,
   syncSessionFromGoogleIdentity
@@ -184,6 +185,14 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse) 
     const session = getCurrentSession(request);
     const currentUser = await getCurrentUserByGoogleSubject(session.subject);
     const dashboard = await getDashboard(currentUser.id);
+    sendJson(response, 200, dashboard);
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/me/receiver-dashboard") {
+    const session = getCurrentSession(request);
+    const currentUser = await getCurrentUserByGoogleSubject(session.subject);
+    const dashboard = await getReceiverDashboard(currentUser.id);
     sendJson(response, 200, dashboard);
     return;
   }

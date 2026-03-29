@@ -8,12 +8,19 @@ import '../services/app_data_service.dart';
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  String _selectedCountry = 'US';
 
   Future<void> _handleGoogleLogin(BuildContext context) async {
     final auth = AuthService();
-    final success = await auth.loginWithGoogle();
+    final success = await auth.loginWithGoogle(country: _selectedCountry);
     if (!success && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -114,6 +121,36 @@ class LoginScreen extends StatelessWidget {
                     ),
                   ),
                   const Spacer(),
+                  // ─── Country Toggle ───────────────────────────────
+                  Center(
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: AppTheme.surfaceContainerLow,
+                        borderRadius: BorderRadius.circular(9999),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _CountryChip(
+                            flag: '🇺🇸',
+                            label: 'USA',
+                            isSelected: _selectedCountry == 'US',
+                            onTap: () => setState(() => _selectedCountry = 'US'),
+                          ),
+                          const SizedBox(width: 4),
+                          _CountryChip(
+                            flag: '🇮🇳',
+                            label: 'India',
+                            isSelected: _selectedCountry == 'IN',
+                            onTap: () => setState(() => _selectedCountry = 'IN'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // ─── Google Login Button ──────────────────────────
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
@@ -189,6 +226,59 @@ class LoginScreen extends StatelessWidget {
             },
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _CountryChip extends StatelessWidget {
+  const _CountryChip({
+    required this.flag,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final String flag;
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? AppTheme.surfaceContainerLowest : Colors.transparent,
+          borderRadius: BorderRadius.circular(9999),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.06),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(flag, style: const TextStyle(fontSize: 18)),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 14,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected ? AppTheme.onSurface : AppTheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -16,6 +16,11 @@ class AppRepository {
     return DashboardData.fromJson(response);
   }
 
+  Future<ReceiverDashboardData> fetchReceiverDashboard({required String sessionToken}) async {
+    final response = await _apiClient.getJson('/me/receiver-dashboard', sessionToken: sessionToken);
+    return ReceiverDashboardData.fromJson(response);
+  }
+
   Future<List<RecipientSummary>> searchRecipients({
     required String sessionToken,
     required String query,

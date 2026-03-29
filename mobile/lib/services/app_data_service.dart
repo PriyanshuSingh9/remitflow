@@ -15,6 +15,7 @@ class AppDataService extends ChangeNotifier {
 
   SessionUser? _sessionUser;
   DashboardData? _dashboard;
+  ReceiverDashboardData? _receiverDashboard;
   List<RecipientSummary> _recipients = const [];
   bool _isBootstrapping = false;
   bool _isDashboardLoading = false;
@@ -27,6 +28,7 @@ class AppDataService extends ChangeNotifier {
 
   SessionUser? get sessionUser => _sessionUser;
   DashboardData? get dashboard => _dashboard;
+  ReceiverDashboardData? get receiverDashboard => _receiverDashboard;
   List<RecipientSummary> get recipients => _recipients;
   bool get isBootstrapping => _isBootstrapping;
   bool get isDashboardLoading => _isDashboardLoading;
@@ -87,6 +89,22 @@ class AppDataService extends ChangeNotifier {
       _bootstrapErrorMessage = _readableError(error);
     } finally {
       _isDashboardLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> refreshReceiverDashboard() async {
+    if (!AuthService().isAuthenticated) {
+      return;
+    }
+
+    try {
+      final sessionToken = _requireSessionToken();
+      _receiverDashboard = await _repository.fetchReceiverDashboard(sessionToken: sessionToken);
+      _sessionUser = _receiverDashboard!.user;
+      notifyListeners();
+    } catch (error) {
+      _bootstrapErrorMessage = _readableError(error);
       notifyListeners();
     }
   }
@@ -163,6 +181,7 @@ class AppDataService extends ChangeNotifier {
 
     _sessionUser = null;
     _dashboard = null;
+    _receiverDashboard = null;
     _recipients = const [];
     _bootstrapErrorMessage = null;
     _recipientsErrorMessage = null;

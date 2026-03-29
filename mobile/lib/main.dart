@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
+import 'screens/receiver_home_screen.dart';
 import 'services/app_data_service.dart';
 import 'services/auth_service.dart';
 import 'theme/app_theme.dart';
@@ -92,7 +93,9 @@ class _AppGateState extends State<_AppGate> {
           );
         }
 
-        return const HomeScreen();
+        return AuthService().userCountry == 'IN'
+            ? const ReceiverHomeScreen()
+            : const HomeScreen();
       },
     );
   }

@@ -193,3 +193,25 @@ class TransferReceipt {
     );
   }
 }
+
+class ReceiverDashboardData {
+  const ReceiverDashboardData({
+    required this.user,
+    required this.totalReceivedInr,
+    required this.receivedTransactions,
+  });
+
+  final SessionUser user;
+  final double totalReceivedInr;
+  final List<TransactionSummary> receivedTransactions;
+
+  factory ReceiverDashboardData.fromJson(Map<String, dynamic> json) {
+    return ReceiverDashboardData(
+      user: SessionUser.fromJson(json['user'] as Map<String, dynamic>),
+      totalReceivedInr: (json['totalReceivedInr'] as num?)?.toDouble() ?? 0,
+      receivedTransactions: (json['receivedTransactions'] as List<dynamic>? ?? const [])
+          .map((item) => TransactionSummary.fromJson(item as Map<String, dynamic>))
+          .toList(growable: false),
+    );
+  }
+}

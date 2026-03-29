@@ -24,6 +24,7 @@ class AuthService extends ChangeNotifier {
   static const String _userEmailKey = 'user_email';
   static const String _userNameKey = 'user_name';
   static const String _userPhotoKey = 'user_photo';
+  static const String _userCountryKey = 'user_country';
 
   late final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: ['email', 'profile'],
@@ -37,6 +38,7 @@ class AuthService extends ChangeNotifier {
   String? _userEmail;
   String? _userName;
   String? _userPhoto;
+  String? _userCountry;
   String? _sessionToken;
   String? _lastError;
 
@@ -49,6 +51,7 @@ class AuthService extends ChangeNotifier {
   String? get privKey => _privKey;
   String? get lastError => _lastError;
   String? get userPhoneNumber => null;
+  String get userCountry => _userCountry ?? 'US';
   String? get sessionToken => _sessionToken;
 
   String get _googleServerClientId {
@@ -65,6 +68,7 @@ class AuthService extends ChangeNotifier {
       _userEmail = await _secureStorage.read(key: _userEmailKey);
       _userName = await _secureStorage.read(key: _userNameKey);
       _userPhoto = await _secureStorage.read(key: _userPhotoKey);
+      _userCountry = await _secureStorage.read(key: _userCountryKey);
 
       final storedKey = await _secureStorage.read(key: _walletKey);
       if (storedKey != null && storedKey.isNotEmpty) {
@@ -78,7 +82,7 @@ class AuthService extends ChangeNotifier {
     }
   }
 
-  Future<bool> loginWithGoogle() async {
+  Future<bool> loginWithGoogle({String country = 'US'}) async {
     _isLoading = true;
     _lastError = null;
     notifyListeners();
@@ -117,6 +121,7 @@ class AuthService extends ChangeNotifier {
             body: jsonEncode({
               'idToken': idToken,
               'walletAddress': _walletAddress,
+              'country': country,
             }),
           )
           .timeout(const Duration(seconds: 15));
@@ -134,11 +139,13 @@ class AuthService extends ChangeNotifier {
       _userName = (user['displayName'] as String?) ?? _userName;
       _userPhoto = (user['photoUrl'] as String?) ?? _userPhoto;
       _walletAddress = (user['walletAddress'] as String?) ?? _walletAddress;
+      _userCountry = (user['country'] as String?) ?? country;
 
       await _secureStorage.write(key: _sessionTokenKey, value: _sessionToken);
       await _secureStorage.write(key: _userEmailKey, value: _userEmail);
       await _secureStorage.write(key: _userNameKey, value: _userName);
       await _secureStorage.write(key: _userPhotoKey, value: _userPhoto);
+      await _secureStorage.write(key: _userCountryKey, value: _userCountry);
       return true;
     } on BackendConnectionException catch (error) {
       _lastError = error.message;
@@ -210,6 +217,7 @@ class AuthService extends ChangeNotifier {
       _userEmail = null;
       _userName = null;
       _userPhoto = null;
+      _userCountry = null;
       _lastError = null;
     } catch (error) {
       debugPrint('Logout error: $error');

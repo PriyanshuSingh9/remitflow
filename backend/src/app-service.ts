@@ -335,6 +335,40 @@ export async function getDashboard(currentUserId: string) {
   };
 }
 
+export async function getReceiverDashboard(currentUserId: string) {
+  const [user, receivedTransactions] = await Promise.all([
+    prisma.user.findUniqueOrThrow({
+      where: { id: currentUserId }
+    }),
+    prisma.transaction.findMany({
+      where: {
+        receiverId: currentUserId
+      },
+      include: {
+        sender: true,
+        receiver: true
+      },
+      orderBy: {
+        createdAt: "desc"
+      },
+      take: 20
+    })
+  ]);
+
+  const totalReceivedInr = receivedTransactions.reduce(
+    (sum: number, tx: any) => sum + (toNumber(tx.amountInr) ?? 0),
+    0
+  );
+
+  return {
+    user: serializeUser(user),
+    totalReceivedInr: roundMoney(totalReceivedInr),
+    receivedTransactions: receivedTransactions.map((transaction: any) =>
+      serializeTransaction(transaction, currentUserId)
+    )
+  };
+}
+
 export async function searchRecipients(currentUserId: string, query: string) {
   const search = query.trim();
 

@@ -42,7 +42,7 @@ let _usdcContract: ethers.Contract | null = null;
 
 function getProvider(): ethers.JsonRpcProvider {
   if (!_provider) {
-    _provider = new ethers.JsonRpcProvider(env.polygonRpcUrl);
+    _provider = new ethers.JsonRpcProvider(env.rpcUrl);
   }
   return _provider;
 }
@@ -188,7 +188,7 @@ export async function startEscrowPoller() {
 
   const provider = getProvider();
   _lastScannedBlock = await provider.getBlockNumber();
-  console.log(`[blockchain] Poller started from block ${_lastScannedBlock} on ${env.escrowContractAddress}`);
+  console.log(`[blockchain] Poller started from block ${_lastScannedBlock} (skipping history) on ${env.escrowContractAddress}`);
 
   const poll = async () => {
     try {
@@ -199,6 +199,14 @@ export async function startEscrowPoller() {
       }
 
       const currentBlock = await provider.getBlockNumber();
+
+      // Handle chain reset (e.g. Anvil restart with --load-state)
+      if (currentBlock < _lastScannedBlock) {
+        console.log(`[poller] Chain reset detected (block ${currentBlock} < ${_lastScannedBlock}). Re-syncing.`);
+        _lastScannedBlock = currentBlock;
+        return;
+      }
+
       if (currentBlock <= _lastScannedBlock) return;
 
       const escrow = getEscrowContract();

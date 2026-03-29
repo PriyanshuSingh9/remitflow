@@ -17,7 +17,8 @@ export const env = {
   jwtSecret: read("JWT_SECRET") ?? "super_secret_dev_key_for_remitflow",
 
   // ─── Blockchain ──────────────────────────────────────────────────
-  polygonRpcUrl: read("POLYGON_AMOY_RPC_URL") ?? "https://rpc-amoy.polygon.technology/",
+  rpcUrl: read("RPC_URL") ?? read("POLYGON_AMOY_RPC_URL") ?? "http://127.0.0.1:8545",
+  chainId: Number(read("CHAIN_ID") ?? "31337"),
   escrowContractAddress: read("ESCROW_CONTRACT_ADDRESS") ?? read("CONTRACT_ADDRESS") ?? "",
   operatorPrivateKey: read("OPERATOR_PRIVATE_KEY") ?? "",
   usdcAddress: read("USDC_ADDRESS") ?? "",

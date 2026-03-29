@@ -479,6 +479,18 @@ export async function createTransfer(currentUserId: string, input: TransferInput
     walletAddress: result.senderWalletAddress
   });
 
+  // Auto-complete the on-ramp (no separate Transak widget step needed)
+  // Fire in the background so the API response isn't delayed
+  setImmediate(async () => {
+    try {
+      console.log(`[auto-onramp] Triggering completeOnRamp for order ${orderId}`);
+      await completeOnRamp(orderId);
+      console.log(`[auto-onramp] Successfully completed on-ramp for order ${orderId}`);
+    } catch (err) {
+      console.error(`[auto-onramp] Failed for order ${orderId}:`, err);
+    }
+  });
+
   return {
     transaction: serializeTransaction(result.transaction, currentUserId),
     senderBalanceAfter: result.senderBalanceAfter,

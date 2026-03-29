@@ -262,6 +262,60 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse) 
     return;
   }
 
+  // ─── Demo: Force Release (safety net for live demo) ────────────
+  if (request.method === "POST" && url.pathname === "/demo/force-release") {
+    const body = (await readBody(request)) as { escrowId?: number; transactionId?: string };
+
+    if (body.transactionId) {
+      // Look up escrowId from DB
+      const tx = await (await import("./prisma")).prisma.transaction.findUnique({
+        where: { id: body.transactionId },
+      });
+      if (!tx || tx.escrowId == null) {
+        throw new HttpError("Transaction not found or no escrowId.", 404);
+      }
+      body.escrowId = tx.escrowId;
+    }
+
+    if (body.escrowId == null) {
+      throw new HttpError("escrowId or transactionId is required.", 400);
+    }
+
+    const { releaseEscrow, confirmReadyForFunding } = await import("./ramp/blockchain");
+
+    // Try confirm first (may fail if already confirmed — that's OK)
+    try { await confirmReadyForFunding(body.escrowId); } catch {}
+
+    const txHash = await releaseEscrow(body.escrowId);
+
+    // Update DB status
+    if (body.transactionId) {
+      await (await import("./prisma")).prisma.transaction.update({
+        where: { id: body.transactionId },
+        data: {
+          status: "completed",
+          escrowState: "Released",
+          releaseTxHash: txHash,
+          completedAt: new Date(),
+        },
+      });
+    }
+
+    sendJson(response, 200, { ok: true, escrowId: body.escrowId, txHash });
+    return;
+  }
+
+  // ─── Demo: Admin Panel HTML ────────────────────────────────────
+  if (request.method === "GET" && url.pathname === "/demo/admin") {
+    const html = renderDemoAdminHtml();
+    response.writeHead(200, {
+      "Content-Type": "text/html; charset=utf-8",
+      "Access-Control-Allow-Origin": "*",
+    });
+    response.end(html);
+    return;
+  }
+
   throw new HttpError(`Route not found: ${request.method} ${url.pathname}`, 404);
 }
 
@@ -282,6 +336,100 @@ const server = createServer(async (request, response) => {
     });
   }
 });
+
+function renderDemoAdminHtml(): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RemitFlow — Demo Admin</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f0f23; color: #e0e0e0;
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    }
+    .card {
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px; padding: 32px; max-width: 420px; width: 90%;
+    }
+    h1 { font-size: 20px; margin-bottom: 4px; color: #fff; }
+    .sub { color: rgba(255,255,255,0.4); font-size: 13px; margin-bottom: 24px; }
+    label { display: block; font-size: 13px; color: rgba(255,255,255,0.6); margin-bottom: 6px; }
+    input {
+      width: 100%; padding: 12px; border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 10px; background: rgba(255,255,255,0.05); color: #fff;
+      font-size: 14px; margin-bottom: 16px; outline: none;
+    }
+    input:focus { border-color: #818cf8; }
+    button {
+      width: 100%; padding: 14px; border: none; border-radius: 12px;
+      font-size: 15px; font-weight: 600; cursor: pointer;
+      background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff;
+      transition: transform 0.1s;
+    }
+    button:active { transform: scale(0.97); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .result {
+      margin-top: 16px; padding: 12px; border-radius: 10px;
+      background: rgba(255,255,255,0.04); font-size: 13px;
+      font-family: monospace; white-space: pre-wrap; display: none;
+    }
+    .result.ok { border-left: 3px solid #22c55e; display: block; }
+    .result.err { border-left: 3px solid #ef4444; display: block; color: #fca5a5; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>⚡ Demo Admin</h1>
+    <div class="sub">Force-release a stuck escrow during live demo</div>
+
+    <label>Escrow ID (number)</label>
+    <input id="escrowId" type="number" placeholder="0" />
+
+    <label>— or — Transaction ID (UUID)</label>
+    <input id="txId" type="text" placeholder="abc123-..." />
+
+    <button id="btn" onclick="forceRelease()">Force Release Escrow</button>
+    <div id="result" class="result"></div>
+  </div>
+  <script>
+    async function forceRelease() {
+      const btn = document.getElementById('btn');
+      const res = document.getElementById('result');
+      const escrowId = document.getElementById('escrowId').value;
+      const txId = document.getElementById('txId').value;
+      btn.disabled = true; btn.textContent = 'Releasing…';
+      res.className = 'result';
+      try {
+        const body = {};
+        if (txId) body.transactionId = txId;
+        else if (escrowId !== '') body.escrowId = parseInt(escrowId);
+        const r = await fetch('/demo/force-release', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        const data = await r.json();
+        if (r.ok) {
+          res.className = 'result ok';
+          res.textContent = '✓ Released\\nTx: ' + data.txHash;
+        } else {
+          res.className = 'result err';
+          res.textContent = '✗ ' + (data.error || JSON.stringify(data));
+        }
+      } catch(e) {
+        res.className = 'result err';
+        res.textContent = '✗ ' + e.message;
+      }
+      btn.disabled = false; btn.textContent = 'Force Release Escrow';
+    }
+  </script>
+</body>
+</html>`;
+}
 
 if (env.enableBlockchain) {
   startEscrowPoller().catch((err) =>

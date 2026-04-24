@@ -81,130 +81,188 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
           SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppTheme.vaultGreen,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Icon(
-                      Icons.account_balance_wallet_rounded,
-                      color: AppTheme.primaryContainer,
-                      size: 32,
-                    ),
-                  ),
-                  const SizedBox(height: 48),
-                  Text(
-                    'Global Wealth,\nSeamlessly\nCurated.',
-                    style: GoogleFonts.newsreader(
-                      fontSize: 48,
-                      fontWeight: FontWeight.w400,
-                      color: AppTheme.onSurface,
-                      letterSpacing: -1,
-                      height: 1.05,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Experience the modern way to manage cross-border remittances. Beautiful, secure, and now backed by live Neon data.',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w400,
-                      color: AppTheme.onSurfaceVariant,
-                      height: 1.5,
-                    ),
-                  ),
-                  const Spacer(),
-                  // ─── Country Toggle ───────────────────────────────
-                  Center(
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: AppTheme.surfaceContainerLow,
-                        borderRadius: BorderRadius.circular(9999),
-                      ),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ── Brand Logo ───────────────────────────────
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(28, 24, 28, 0),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          _CountryChip(
-                            flag: '🇺🇸',
-                            label: 'USA',
-                            isSelected: _selectedCountry == 'US',
-                            onTap: () => setState(() => _selectedCountry = 'US'),
+                          Image.asset(
+                            'assets/images/remitflow_logo.png',
+                            width: 32,
+                            height: 32,
                           ),
-                          const SizedBox(width: 4),
-                          _CountryChip(
-                            flag: '🇮🇳',
-                            label: 'India',
-                            isSelected: _selectedCountry == 'IN',
-                            onTap: () => setState(() => _selectedCountry = 'IN'),
+                          const SizedBox(width: 10),
+                          Text(
+                            'RemitFlow',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.vaultGreen,
+                              letterSpacing: -0.5,
+                            ),
                           ),
                         ],
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  // ─── Google Login Button ──────────────────────────
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () => _handleGoogleLogin(context),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.surfaceContainerLowest,
-                        foregroundColor: AppTheme.onSurface,
-                        padding: const EdgeInsets.symmetric(vertical: 18),
-                        elevation: 0.5,
-                        side: BorderSide(
-                          color: AppTheme.outlineVariant.withOpacity(0.5),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minHeight: constraints.maxHeight - 80,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              // ── Top Section (Hero + Typography) ───────────
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const SizedBox(height: 20),
+                                  Center(
+                                    child: Container(
+                                      height: 180,
+                                      width: 180,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: AppTheme.vaultGreen.withOpacity(0.15),
+                                            blurRadius: 40,
+                                            spreadRadius: 8,
+                                          ),
+                                        ],
+                                      ),
+                                      child: ClipOval(
+                                        child: Image.asset(
+                                          'assets/images/login_hero_globe.png',
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 48),
+                                  Text(
+                                    'Global Wealth,\nSeamlessly\nCurated.',
+                                    style: GoogleFonts.newsreader(
+                                      fontSize: 46,
+                                      fontWeight: FontWeight.w500,
+                                      color: AppTheme.onSurface,
+                                      letterSpacing: -1.5,
+                                      height: 1.05,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'Experience the modern way to manage cross-border remittances. Beautiful, secure, and powered by Polygon.',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w400,
+                                      color: AppTheme.onSurfaceVariant,
+                                      height: 1.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
+
+                              // ── Bottom Section (Actions) ──────────────────
+                              Column(
+                                children: [
+                                  const SizedBox(height: 48),
+                                  Container(
+                                    padding: const EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.surfaceContainerLow,
+                                      borderRadius: BorderRadius.circular(9999),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        _CountryChip(
+                                          flag: '🇺🇸',
+                                          label: 'USA',
+                                          isSelected: _selectedCountry == 'US',
+                                          onTap: () => setState(() => _selectedCountry = 'US'),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        _CountryChip(
+                                          flag: '🇮🇳',
+                                          label: 'India',
+                                          isSelected: _selectedCountry == 'IN',
+                                          onTap: () => setState(() => _selectedCountry = 'IN'),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 20),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: ElevatedButton.icon(
+                                      onPressed: () => _handleGoogleLogin(context),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: AppTheme.surfaceContainerLowest,
+                                        foregroundColor: AppTheme.onSurface,
+                                        padding: const EdgeInsets.symmetric(vertical: 18),
+                                        elevation: 0.5,
+                                        side: BorderSide(
+                                          color: AppTheme.outlineVariant.withOpacity(0.5),
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(9999),
+                                        ),
+                                      ),
+                                      icon: const FaIcon(FontAwesomeIcons.google, size: 20),
+                                      label: Text(
+                                        'Continue with Google',
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  if (AuthService().lastError != null) ...[
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      AuthService().lastError!,
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppTheme.error,
+                                      ),
+                                    ),
+                                  ],
+                                  const SizedBox(height: 20),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                                    child: Text(
+                                      'By continuing, you agree to our Terms of Service and Privacy Policy.',
+                                      textAlign: TextAlign.center,
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                        color: AppTheme.onSurfaceVariant.withOpacity(0.7),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(9999),
-                        ),
-                      ),
-                      icon: const FaIcon(FontAwesomeIcons.google, size: 20),
-                      label: Text(
-                        'Continue with Google',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ),
-                  ),
-                  if (AuthService().lastError != null) ...[
-                    const SizedBox(height: 12),
-                    Text(
-                      AuthService().lastError!,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.error,
                       ),
                     ),
                   ],
-                  const SizedBox(height: 16),
-                  Center(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(
-                        'By continuing, you agree to our Terms of Service and Privacy Policy.',
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 12,
-                          color: AppTheme.onSurfaceVariant.withOpacity(0.7),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                );
+              },
             ),
           ),
           ListenableBuilder(

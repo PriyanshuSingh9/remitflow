@@ -1,12 +1,30 @@
 import { prisma } from "./prisma";
 import { env } from "./env";
 
+const USD_INR_FALLBACK_RATE = 83.42;
+
 const USD_INR_RATE = {
   baseCurrency: "USD",
   quoteCurrency: "INR",
-  rate: 83.42,
+  rate: USD_INR_FALLBACK_RATE,
   cheaperPercentage: 2.3
 } as const;
+
+/** Fetch the live USD → INR rate from the same public API the mobile app uses. */
+async function fetchLiveUsdInrRate(): Promise<number> {
+  try {
+    const res = await fetch("https://open.er-api.com/v6/latest/USD");
+    if (res.ok) {
+      const data = await res.json();
+      if (data.result === "success" && data.rates?.INR) {
+        return Number(data.rates.INR);
+      }
+    }
+  } catch (err) {
+    console.warn("[exchange-rate] Failed to fetch live rate, using fallback:", err);
+  }
+  return USD_INR_FALLBACK_RATE;
+}
 
 const DEMO_RECIPIENTS = [
   {
@@ -301,7 +319,7 @@ export async function getCurrentUserByGoogleSubject(googleSubject: string) {
 }
 
 export async function getDashboard(currentUserId: string) {
-  const [user, recentTransactions] = await Promise.all([
+  const [user, recentTransactions, liveRate] = await Promise.all([
     prisma.user.findUniqueOrThrow({
       where: { id: currentUserId }
     }),
@@ -317,7 +335,8 @@ export async function getDashboard(currentUserId: string) {
         createdAt: "desc"
       },
       take: 5
-    })
+    }),
+    fetchLiveUsdInrRate()
   ]);
 
   return {
@@ -325,7 +344,7 @@ export async function getDashboard(currentUserId: string) {
     exchangeRate: {
       baseCurrency: USD_INR_RATE.baseCurrency,
       quoteCurrency: USD_INR_RATE.quoteCurrency,
-      rate: USD_INR_RATE.rate,
+      rate: liveRate,
       cheaperPercentage: USD_INR_RATE.cheaperPercentage,
       asOf: new Date().toISOString()
     },
@@ -429,11 +448,16 @@ export async function createTransfer(currentUserId: string, input: TransferInput
       throw new Error("Insufficient balance for this transfer.");
     }
 
-    const rate = USD_INR_RATE.rate;
+    const rate = await fetchLiveUsdInrRate();
     const usdToUsdc = 1.0; // 1:1 for mock
-    const feeUsd = roundMoney(input.amountUsd * 0.025);
-    const amountUsdc = roundCrypto(Math.max(input.amountUsd - feeUsd, 0));
-    const amountInr = roundMoney(input.amountUsd * rate);
+    
+    // Match frontend fee structure: 3.25% + $0.01 flat gas
+    const feeUsd = roundMoney(input.amountUsd * 0.0325 + 0.01);
+    
+    // Receiver gets amount after 3.25% fee (gas is protocol-level, paid separately from received amount in frontend logic)
+    const receivedUsd = input.amountUsd * (1 - 0.0325);
+    const amountUsdc = roundCrypto(Math.max(receivedUsd, 0));
+    const amountInr = roundMoney(receivedUsd * rate);
 
     await tx.user.update({
       where: { id: sender.id },

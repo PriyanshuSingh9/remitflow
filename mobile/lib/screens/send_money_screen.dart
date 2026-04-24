@@ -6,6 +6,7 @@ import '../models/app_models.dart';
 import '../services/app_data_service.dart';
 import '../services/exchange_rate_service.dart';
 import '../theme/app_theme.dart';
+import 'receipt_screen.dart';
 
 /// Step 2 of the transfer flow — enter USD amount, see full fee breakdown
 /// (Transak on-ramp + Polygon gas + OnMeta off-ramp + RemitFlow platform fee),
@@ -88,20 +89,14 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
   Future<void> _submitTransfer() async {
     final appData = AppDataService();
     try {
-      await appData.submitTransfer(
+      final receipt = await appData.submitTransfer(
         recipientId: widget.recipient.id,
         amountUsd: _sendAmount,
       );
       if (!mounted) return;
-      Navigator.of(context).popUntil((r) => r.isFirst);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Sent \$${_sendAmount.toStringAsFixed(2)} to ${widget.recipient.preferredName}',
-          ),
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: AppTheme.vaultGreen,
-        ),
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => ReceiptScreen(receipt: receipt)),
+        (route) => route.isFirst,
       );
     } catch (_) {
       if (!mounted) return;

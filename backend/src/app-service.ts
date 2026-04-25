@@ -451,11 +451,10 @@ export async function createTransfer(currentUserId: string, input: TransferInput
     const rate = await fetchLiveUsdInrRate();
     const usdToUsdc = 1.0; // 1:1 for mock
     
-    // Match frontend fee structure: 3.25% + $0.01 flat gas
-    const feeUsd = roundMoney(input.amountUsd * 0.0325 + 0.01);
+    // Match frontend fee structure: 4% total.
+    const feeUsd = roundMoney(input.amountUsd * 0.04);
     
-    // Receiver gets amount after 3.25% fee (gas is protocol-level, paid separately from received amount in frontend logic)
-    const receivedUsd = input.amountUsd * (1 - 0.0325);
+    const receivedUsd = input.amountUsd * (1 - 0.04);
     const amountUsdc = roundCrypto(Math.max(receivedUsd, 0));
     const amountInr = roundMoney(receivedUsd * rate);
 
@@ -512,6 +511,20 @@ export async function createTransfer(currentUserId: string, input: TransferInput
       console.log(`[auto-onramp] Successfully completed on-ramp for order ${orderId}`);
     } catch (err) {
       console.error(`[auto-onramp] Failed for order ${orderId}:`, err);
+      await prisma.$transaction([
+        prisma.transaction.update({
+          where: { id: result.transaction.id },
+          data: { status: "failed" }
+        }),
+        prisma.user.update({
+          where: { id: currentUserId },
+          data: {
+            availableBalanceUsd: {
+              increment: input.amountUsd
+            }
+          }
+        })
+      ]);
     }
   });
 
@@ -621,5 +634,3 @@ export async function getTransferDetail(transactionId: string, currentUserId: st
     offRampStatus: offRampOrder?.status ?? null
   };
 }
-
-

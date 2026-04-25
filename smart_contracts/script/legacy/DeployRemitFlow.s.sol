@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
 
-import "../src/RemitFlow.sol";
+import "../../src/legacy/RemitFlow.sol";
 
 interface Vm {
     function envAddress(string calldata name) external view returns (address);
@@ -22,4 +22,3 @@ contract DeployRemitFlow {
         vm.stopBroadcast();
     }
 }
-

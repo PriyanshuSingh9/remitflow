@@ -10,8 +10,6 @@ import '../services/auth_service.dart';
 import '../services/app_data_service.dart';
 import '../services/exchange_rate_service.dart';
 
-
-
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
@@ -72,11 +70,7 @@ class _GrainOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Positioned.fill(
-      child: IgnorePointer(
-        child: CustomPaint(
-          painter: _GrainPainter(),
-        ),
-      ),
+      child: IgnorePointer(child: CustomPaint(painter: _GrainPainter())),
     );
   }
 }
@@ -157,7 +151,8 @@ class _GreetingSection extends StatelessWidget {
               width: 32,
               height: 32,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => _initialsAvatar(initials),
+              errorBuilder: (context, error, stackTrace) =>
+                  _initialsAvatar(initials),
             )
           : _initialsAvatar(initials),
     );
@@ -194,8 +189,6 @@ class _BalanceHeroWithMesh extends StatefulWidget {
 }
 
 class _BalanceHeroWithMeshState extends State<_BalanceHeroWithMesh> {
-  // The demo transfer amount used for the savings comparison.
-  double _balance = 2450.00;
   bool _isLoading = true;
 
   // ── SWIFT Competitor Fee Model (industry-standard rates) ─────────
@@ -214,9 +207,10 @@ class _BalanceHeroWithMeshState extends State<_BalanceHeroWithMesh> {
   /// for the same send amount. Derived deterministically from fee models above.
   static double _computeSavingsVsSwift(double sendAmountUsd) {
     final remitflowReceived = sendAmountUsd * (1 - _remitflowFeeFrac);
-    final swiftReceived = sendAmountUsd * (1 - _swiftFxMarkupFrac)
-        - _swiftFlatFeeUsd
-        - _swiftCorrespondentFeeUsd;
+    final swiftReceived =
+        sendAmountUsd * (1 - _swiftFxMarkupFrac) -
+        _swiftFlatFeeUsd -
+        _swiftCorrespondentFeeUsd;
     return (remitflowReceived - swiftReceived).clamp(0.0, double.infinity);
   }
 
@@ -239,101 +233,116 @@ class _BalanceHeroWithMeshState extends State<_BalanceHeroWithMesh> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
 
-    // Savings = RemitFlow received − SWIFT received (same send amount).
-    final savings = _computeSavingsVsSwift(_balance);
+    return ListenableBuilder(
+      listenable: AppDataService(),
+      builder: (context, _) {
+        final user = AppDataService().dashboard?.user;
+        final balance = user?.availableBalanceUsd ?? 0;
+        final savings =
+            user?.lifetimeSavingsUsd ?? _computeSavingsVsSwift(balance);
 
-    // Format amounts
-    final balanceStr = '\$ ${_balance.toStringAsFixed(2).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}';
-    final savingsStr = '\$${savings.toStringAsFixed(2)}';
-    
-    return SizedBox(
-      width: screenWidth,
-      height: 280,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // ── Gradient Mesh Blob ─────────────────────────────────
-          Positioned.fill(
-            child: CustomPaint(
-              painter: _MeshBlobPainter(),
-            ),
-          ),
+        final balanceStr =
+            '\$ ${balance.toStringAsFixed(2).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}';
+        final savingsStr = '\$${savings.toStringAsFixed(2)}';
 
-          // ── Text Content over the mesh ────────────────────────
-          Column(
-            mainAxisSize: MainAxisSize.min,
+        return SizedBox(
+          width: screenWidth,
+          height: 280,
+          child: Stack(
+            alignment: Alignment.center,
             children: [
-              // "You have saved" context text
-              Text(
-                'You have saved',
-                style: GoogleFonts.newsreader(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w400,
-                  color: AppTheme.onSurface.withValues(alpha: 0.65),
-                ),
-              ),
-              const SizedBox(height: 6),
+              // ── Gradient Mesh Blob ─────────────────────────────────
+              Positioned.fill(child: CustomPaint(painter: _MeshBlobPainter())),
 
-              // Earned badge + "on transfers" row
-              Row(
+              // ── Text Content over the mesh ────────────────────────
+              Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Lime green pill with saved amount
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(9999),
-                    ),
-                    child: _isLoading 
-                      ? const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF1A1C1C)))
-                      : Text(
-                          savingsStr,
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF1A1C1C),
-                          ),
-                        ),
-                  ),
-                  const SizedBox(width: 6),
+                  // "You have saved" context text
                   Text(
-                    '→',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: AppTheme.onSurface.withValues(alpha: 0.5),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'on a transfer of',
+                    'You have saved',
                     style: GoogleFonts.newsreader(
                       fontSize: 15,
                       fontWeight: FontWeight.w400,
                       color: AppTheme.onSurface.withValues(alpha: 0.65),
                     ),
                   ),
+                  const SizedBox(height: 6),
+
+                  // Earned badge + "on transfers" row
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Lime green pill with saved amount
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(9999),
+                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                width: 12,
+                                height: 12,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Color(0xFF1A1C1C),
+                                ),
+                              )
+                            : Text(
+                                savingsStr,
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF1A1C1C),
+                                ),
+                              ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        '→',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: AppTheme.onSurface.withValues(alpha: 0.5),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'on a transfer of',
+                        style: GoogleFonts.newsreader(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w400,
+                          color: AppTheme.onSurface.withValues(alpha: 0.65),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Big Balance
+                  _isLoading
+                      ? const CircularProgressIndicator(
+                          color: AppTheme.vaultGreen,
+                        )
+                      : Text(
+                          balanceStr,
+                          style: GoogleFonts.newsreader(
+                            fontSize: 52,
+                            fontWeight: FontWeight.w400,
+                            color: AppTheme.vaultGreen,
+                            letterSpacing: -1.5,
+                            height: 1.0,
+                          ),
+                        ),
                 ],
               ),
-              const SizedBox(height: 12),
-
-              // Big Balance
-              _isLoading 
-                 ? const CircularProgressIndicator(color: AppTheme.vaultGreen)
-                 : Text(
-                    balanceStr,
-                    style: GoogleFonts.newsreader(
-                      fontSize: 52,
-                      fontWeight: FontWeight.w400,
-                      color: AppTheme.vaultGreen,
-                      letterSpacing: -1.5,
-                      height: 1.0,
-                    ),
-                  ),
             ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -401,13 +410,11 @@ class _MeshBlobPainter extends CustomPainter {
       height: radiusY * 2,
     );
     final paint = Paint()
-      ..shader = ui.Gradient.radial(
-        center,
-        radiusX,
-        colors,
-        [0.0, 0.5, 1.0],
-        TileMode.clamp,
-      )
+      ..shader = ui.Gradient.radial(center, radiusX, colors, [
+        0.0,
+        0.5,
+        1.0,
+      ], TileMode.clamp)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 30);
 
     canvas.drawOval(rect, paint);
@@ -440,7 +447,10 @@ class _ExchangeRateTickerState extends State<_ExchangeRateTicker> {
   }
 
   Future<void> _fetchExchangeRate() async {
-    final rate = await ExchangeRateService.getExchangeRate(baseCurrency: 'USD', targetCurrency: 'INR');
+    final rate = await ExchangeRateService.getExchangeRate(
+      baseCurrency: 'USD',
+      targetCurrency: 'INR',
+    );
     if (mounted) {
       setState(() {
         if (rate != null) {
@@ -475,13 +485,20 @@ class _ExchangeRateTickerState extends State<_ExchangeRateTicker> {
               ),
             ),
             const SizedBox(width: 8),
-            const Icon(Icons.sync_alt_rounded, size: 16, color: AppTheme.onSurfaceVariant),
+            const Icon(
+              Icons.sync_alt_rounded,
+              size: 16,
+              color: AppTheme.onSurfaceVariant,
+            ),
             const SizedBox(width: 8),
             _isLoading
                 ? const SizedBox(
-                    width: 12, 
-                    height: 12, 
-                    child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.vaultGreen)
+                    width: 12,
+                    height: 12,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppTheme.vaultGreen,
+                    ),
                   )
                 : Text(
                     '₹${_exchangeRate.toStringAsFixed(2)}',
@@ -503,7 +520,9 @@ class _ExchangeRateTickerState extends State<_ExchangeRateTicker> {
                     width: 6,
                     height: 6,
                     decoration: BoxDecoration(
-                      color: _isLive ? AppTheme.vaultGreen : AppTheme.onSurfaceVariant,
+                      color: _isLive
+                          ? AppTheme.vaultGreen
+                          : AppTheme.onSurfaceVariant,
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -513,7 +532,9 @@ class _ExchangeRateTickerState extends State<_ExchangeRateTicker> {
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 9,
                       fontWeight: FontWeight.w800,
-                      color: _isLive ? AppTheme.vaultGreen : AppTheme.onSurfaceVariant,
+                      color: _isLive
+                          ? AppTheme.vaultGreen
+                          : AppTheme.onSurfaceVariant,
                       letterSpacing: 1.2,
                     ),
                   ),
@@ -724,12 +745,7 @@ class _BottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.only(
-        left: 32,
-        right: 32,
-        top: 32,
-        bottom: 16,
-      ),
+      padding: const EdgeInsets.only(left: 32, right: 32, top: 32, bottom: 16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
@@ -763,7 +779,10 @@ class _BottomNavBar extends StatelessWidget {
                 );
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 28,
+                  vertical: 14,
+                ),
                 decoration: BoxDecoration(
                   color: AppTheme.primaryContainer,
                   borderRadius: BorderRadius.circular(9999),
@@ -778,7 +797,11 @@ class _BottomNavBar extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.send_rounded, size: 18, color: Color(0xFF1A1C1C)),
+                    const Icon(
+                      Icons.send_rounded,
+                      size: 18,
+                      color: Color(0xFF1A1C1C),
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       'TRANSFER',

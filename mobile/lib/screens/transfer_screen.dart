@@ -47,9 +47,7 @@ class _TransferScreenState extends State<TransferScreen> {
   void _onRecipientSelected(RecipientSummary recipient) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => SendMoneyScreen(recipient: recipient),
-      ),
+      MaterialPageRoute(builder: (_) => SendMoneyScreen(recipient: recipient)),
     );
   }
 
@@ -178,7 +176,7 @@ class _TransferScreenState extends State<TransferScreen> {
     return ListView.separated(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       itemCount: recipients.length,
-      separatorBuilder: (_, __) => Divider(
+      separatorBuilder: (context, index) => Divider(
         height: 1,
         color: AppTheme.surfaceContainer.withValues(alpha: 0.7),
       ),

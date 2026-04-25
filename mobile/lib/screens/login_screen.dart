@@ -56,7 +56,7 @@ class _LoginScreenState extends State<LoginScreen> {
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppTheme.secondaryContainer.withOpacity(0.5),
+                color: AppTheme.secondaryContainer.withValues(alpha: 0.5),
               ),
             ),
           ),
@@ -68,7 +68,7 @@ class _LoginScreenState extends State<LoginScreen> {
               height: 250,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppTheme.tertiaryContainer.withOpacity(0.4),
+                color: AppTheme.tertiaryContainer.withValues(alpha: 0.4),
               ),
             ),
           ),
@@ -76,7 +76,7 @@ class _LoginScreenState extends State<LoginScreen> {
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 70, sigmaY: 70),
               child: Container(
-                color: AppTheme.surfaceContainerLowest.withOpacity(0.4),
+                color: AppTheme.surfaceContainerLowest.withValues(alpha: 0.4),
               ),
             ),
           ),
@@ -112,7 +112,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     Expanded(
                       child: SingleChildScrollView(
-                        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 28,
+                          vertical: 24,
+                        ),
                         child: ConstrainedBox(
                           constraints: BoxConstraints(
                             minHeight: constraints.maxHeight - 80,
@@ -134,7 +137,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                         shape: BoxShape.circle,
                                         boxShadow: [
                                           BoxShadow(
-                                            color: AppTheme.vaultGreen.withOpacity(0.15),
+                                            color: AppTheme.vaultGreen
+                                                .withValues(alpha: 0.15),
                                             blurRadius: 40,
                                             spreadRadius: 8,
                                           ),
@@ -189,14 +193,18 @@ class _LoginScreenState extends State<LoginScreen> {
                                           flag: '🇺🇸',
                                           label: 'USA',
                                           isSelected: _selectedCountry == 'US',
-                                          onTap: () => setState(() => _selectedCountry = 'US'),
+                                          onTap: () => setState(
+                                            () => _selectedCountry = 'US',
+                                          ),
                                         ),
                                         const SizedBox(width: 4),
                                         _CountryChip(
                                           flag: '🇮🇳',
                                           label: 'India',
                                           isSelected: _selectedCountry == 'IN',
-                                          onTap: () => setState(() => _selectedCountry = 'IN'),
+                                          onTap: () => setState(
+                                            () => _selectedCountry = 'IN',
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -205,20 +213,30 @@ class _LoginScreenState extends State<LoginScreen> {
                                   SizedBox(
                                     width: double.infinity,
                                     child: ElevatedButton.icon(
-                                      onPressed: () => _handleGoogleLogin(context),
+                                      onPressed: () =>
+                                          _handleGoogleLogin(context),
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: AppTheme.surfaceContainerLowest,
+                                        backgroundColor:
+                                            AppTheme.surfaceContainerLowest,
                                         foregroundColor: AppTheme.onSurface,
-                                        padding: const EdgeInsets.symmetric(vertical: 18),
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 18,
+                                        ),
                                         elevation: 0.5,
                                         side: BorderSide(
-                                          color: AppTheme.outlineVariant.withOpacity(0.5),
+                                          color: AppTheme.outlineVariant
+                                              .withValues(alpha: 0.5),
                                         ),
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(9999),
+                                          borderRadius: BorderRadius.circular(
+                                            9999,
+                                          ),
                                         ),
                                       ),
-                                      icon: const FaIcon(FontAwesomeIcons.google, size: 20),
+                                      icon: const FaIcon(
+                                        FontAwesomeIcons.google,
+                                        size: 20,
+                                      ),
                                       label: Text(
                                         'Continue with Google',
                                         style: GoogleFonts.plusJakartaSans(
@@ -242,14 +260,17 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ],
                                   const SizedBox(height: 20),
                                   Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                    ),
                                     child: Text(
                                       'By continuing, you agree to our Terms of Service and Privacy Policy.',
                                       textAlign: TextAlign.center,
                                       style: GoogleFonts.plusJakartaSans(
                                         fontSize: 12,
                                         fontWeight: FontWeight.w500,
-                                        color: AppTheme.onSurfaceVariant.withOpacity(0.7),
+                                        color: AppTheme.onSurfaceVariant
+                                            .withValues(alpha: 0.7),
                                       ),
                                     ),
                                   ),
@@ -310,12 +331,14 @@ class _CountryChip extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.surfaceContainerLowest : Colors.transparent,
+          color: isSelected
+              ? AppTheme.surfaceContainerLowest
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(9999),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.06),
+                    color: Colors.black.withValues(alpha: 0.06),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -332,7 +355,9 @@ class _CountryChip extends StatelessWidget {
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 14,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color: isSelected ? AppTheme.onSurface : AppTheme.onSurfaceVariant,
+                color: isSelected
+                    ? AppTheme.onSurface
+                    : AppTheme.onSurfaceVariant,
               ),
             ),
           ],

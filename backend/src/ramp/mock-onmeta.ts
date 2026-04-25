@@ -127,9 +127,10 @@ async function processOffRampPipeline(
   } catch (error) {
     console.error(`[offramp] ${externalOrderId}: FAILED`, error);
 
-    // Attempt refund on failure
+    let refundSucceeded = false;
     try {
       await refundEscrow(escrowId);
+      refundSucceeded = true;
     } catch (refundError) {
       console.error(`[offramp] ${externalOrderId}: refund also failed`, refundError);
     }
@@ -138,9 +139,33 @@ async function processOffRampPipeline(
       where: { externalOrderId },
       data: { status: "FAILED" },
     });
+
+    const transaction = await prisma.transaction.findUnique({
+      where: { id: transactionId },
+      select: { senderId: true, amountUsd: true },
+    });
+
+    if (refundSucceeded && transaction) {
+      await prisma.$transaction([
+        prisma.transaction.update({
+          where: { id: transactionId },
+          data: { status: "refunded", escrowState: "Refunded" },
+        }),
+        prisma.user.update({
+          where: { id: transaction.senderId },
+          data: {
+            availableBalanceUsd: {
+              increment: transaction.amountUsd,
+            },
+          },
+        }),
+      ]);
+      return;
+    }
+
     await prisma.transaction.update({
       where: { id: transactionId },
-      data: { status: "failed", escrowState: "Refunded" },
+      data: { status: "failed" },
     });
   }
 }

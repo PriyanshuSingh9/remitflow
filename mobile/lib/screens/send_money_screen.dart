@@ -32,16 +32,16 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
   // | Component         | Rate  | Provider  | Notes                      |
   // |-------------------|-------|-----------|----------------------------|
   // | On-ramp           | 1.50% | Transak   | USD → USDC card purchase   |
-  // | Polygon gas       | fixed | Polygon   | Near-zero on PoS, ~$0.01   |
+  // | Polygon gas       | fixed | Polygon   | Near-zero on PoS           |
   // | Off-ramp          | 1.50% | OnMeta    | USDC → INR bank credit     |
-  // | Platform          | 0.25% | RemitFlow | Our margin                 |
-  // | Total percentage  | 3.25% |           |                            |
+  // | Platform          | 1.00% | RemitFlow | Our margin                 |
+  // | Total percentage  | 4.00% |           |                            |
   //
-  static const double _transakRate   = 0.015;   // 1.50 %
-  static const double _gasFlat       = 0.01;    // $0.01 flat
-  static const double _onmetaRate    = 0.015;   // 1.50 %
-  static const double _remitflowRate = 0.0025;  // 0.25 %
-  // Sum of percentage fees = 3.25 % (display; backend uses 0.025 factor)
+  static const double _transakRate = 0.015; // 1.50 %
+  static const double _gasFlat = 0.00; // included in the 4% headline fee
+  static const double _onmetaRate = 0.015; // 1.50 %
+  static const double _remitflowRate = 0.010; // 1.00 %
+  // Sum of percentage fees = 4% (matches backend factor 0.04)
 
   @override
   void initState() {
@@ -71,17 +71,18 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
     }
   }
 
-  double get _sendAmount =>
-      double.tryParse(_amountController.text.trim()) ?? 0;
+  double get _sendAmount => double.tryParse(_amountController.text.trim()) ?? 0;
 
-  double get _transakFee   => _sendAmount * _transakRate;
-  double get _onmetaFee    => _sendAmount * _onmetaRate;
+  double get _transakFee => _sendAmount * _transakRate;
+  double get _onmetaFee => _sendAmount * _onmetaRate;
   double get _remitflowFee => _sendAmount * _remitflowRate;
-  double get _totalFeeUsd  => _transakFee + _onmetaFee + _remitflowFee + _gasFlat;
+  double get _totalFeeUsd =>
+      _transakFee + _onmetaFee + _remitflowFee + _gasFlat;
 
   /// What the receiver gets in USD (after all % fees; gas is protocol-level)
-  double get _receivedUsd  => _sendAmount * (1 - _transakRate - _onmetaRate - _remitflowRate);
-  double get _receivedInr  => _receivedUsd * _exchangeRate;
+  double get _receivedUsd =>
+      _sendAmount * (1 - _transakRate - _onmetaRate - _remitflowRate);
+  double get _receivedInr => _receivedUsd * _exchangeRate;
 
   bool get _canSubmit =>
       _sendAmount > 0 && !AppDataService().isTransferSubmitting;
@@ -125,8 +126,11 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
             backgroundColor: Colors.transparent,
             elevation: 0,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                  color: AppTheme.onSurface, size: 20),
+              icon: const Icon(
+                Icons.arrow_back_ios_new_rounded,
+                color: AppTheme.onSurface,
+                size: 20,
+              ),
               onPressed: () => Navigator.pop(context),
             ),
             title: Text(
@@ -145,7 +149,9 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 16),
+                      horizontal: 24,
+                      vertical: 16,
+                    ),
                     child: Column(
                       children: [
                         const SizedBox(height: 16),
@@ -172,7 +178,8 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
                                 controller: _amountController,
                                 keyboardType:
                                     const TextInputType.numberWithOptions(
-                                        decimal: true),
+                                      decimal: true,
+                                    ),
                                 style: GoogleFonts.newsreader(
                                   fontSize: 56,
                                   fontWeight: FontWeight.w400,
@@ -226,18 +233,21 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
                         disabledBackgroundColor: AppTheme.surfaceContainerHigh,
                         padding: const EdgeInsets.symmetric(vertical: 18),
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(9999)),
+                          borderRadius: BorderRadius.circular(9999),
+                        ),
                         elevation: _canSubmit ? 8 : 0,
-                        shadowColor: AppTheme.primaryContainer
-                            .withValues(alpha: 0.4),
+                        shadowColor: AppTheme.primaryContainer.withValues(
+                          alpha: 0.4,
+                        ),
                       ),
                       child: AppDataService().isTransferSubmitting
                           ? const SizedBox(
                               width: 20,
                               height: 20,
                               child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Color(0xFF1A1C1C)),
+                                strokeWidth: 2,
+                                color: Color(0xFF1A1C1C),
+                              ),
                             )
                           : Text(
                               'SEND MONEY',
@@ -246,8 +256,9 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
                                 fontWeight: FontWeight.w800,
                                 color: _canSubmit
                                     ? const Color(0xFF1A1C1C)
-                                    : AppTheme.onSurfaceVariant
-                                        .withValues(alpha: 0.5),
+                                    : AppTheme.onSurfaceVariant.withValues(
+                                        alpha: 0.5,
+                                      ),
                                 letterSpacing: 2,
                               ),
                             ),
@@ -284,23 +295,33 @@ class _RecipientBadge extends StatelessWidget {
               ? NetworkImage(recipient.photoUrl!)
               : null,
           child: recipient.photoUrl == null
-              ? Text(initial,
+              ? Text(
+                  initial,
                   style: GoogleFonts.plusJakartaSans(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.vaultGreen))
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.vaultGreen,
+                  ),
+                )
               : null,
         ),
         const SizedBox(height: 12),
-        Text(recipient.preferredName,
-            style: GoogleFonts.plusJakartaSans(
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
-                color: AppTheme.onSurface)),
+        Text(
+          recipient.preferredName,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 17,
+            fontWeight: FontWeight.w700,
+            color: AppTheme.onSurface,
+          ),
+        ),
         const SizedBox(height: 4),
-        Text(recipient.email,
-            style: GoogleFonts.plusJakartaSans(
-                fontSize: 13, color: AppTheme.onSurfaceVariant)),
+        Text(
+          recipient.email,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 13,
+            color: AppTheme.onSurfaceVariant,
+          ),
+        ),
       ],
     );
   }
@@ -364,16 +385,17 @@ class _ConversionCard extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              if (!rateLoading)
-                _RateChip(isLive: isLiveRate),
+              if (!rateLoading) _RateChip(isLive: isLiveRate),
             ],
           ),
 
           const SizedBox(height: 16),
 
           // You send
-          _Row(label: 'You send',
-               value: '\$${sendAmountUsd.toStringAsFixed(2)}'),
+          _Row(
+            label: 'You send',
+            value: '\$${sendAmountUsd.toStringAsFixed(2)}',
+          ),
 
           const SizedBox(height: 12),
 
@@ -390,13 +412,16 @@ class _ConversionCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
               ),
               child: ExpansionTile(
-                tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                tilePadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 0,
+                ),
                 childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
                 title: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Total fees (3.25%)',
+                      'Total fees (4%)',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -417,7 +442,10 @@ class _ConversionCard extends StatelessWidget {
                 iconColor: AppTheme.onSurfaceVariant,
                 collapsedIconColor: AppTheme.onSurfaceVariant,
                 children: [
-                  Divider(height: 1, color: AppTheme.surfaceContainer.withValues(alpha: 0.8)),
+                  Divider(
+                    height: 1,
+                    color: AppTheme.surfaceContainer.withValues(alpha: 0.8),
+                  ),
                   const SizedBox(height: 10),
                   _Row(
                     label: 'On-ramp fee (Transak, 1.5%)',
@@ -441,7 +469,7 @@ class _ConversionCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   _Row(
-                    label: 'RemitFlow platform (0.25%)',
+                    label: 'RemitFlow platform (1%)',
                     value: '-\$${remitflowFee.toStringAsFixed(2)}',
                     valueColor: AppTheme.onSurfaceVariant,
                     isSmall: true,
@@ -466,8 +494,9 @@ class _ConversionCard extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 14),
             child: Divider(
-                height: 1,
-                color: AppTheme.surfaceContainer.withValues(alpha: 0.6)),
+              height: 1,
+              color: AppTheme.surfaceContainer.withValues(alpha: 0.6),
+            ),
           ),
 
           // Receiver gets — hero number
@@ -489,7 +518,10 @@ class _ConversionCard extends StatelessWidget {
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2, color: AppTheme.vaultGreen))
+                        strokeWidth: 2,
+                        color: AppTheme.vaultGreen,
+                      ),
+                    )
                   : Text(
                       '₹${inrFmt.format(receivedInr)}',
                       style: GoogleFonts.newsreader(
@@ -505,7 +537,9 @@ class _ConversionCard extends StatelessWidget {
           Text(
             'Estimated delivery: 5–10 minutes via UPI',
             style: GoogleFonts.plusJakartaSans(
-                fontSize: 11, color: AppTheme.onSurfaceVariant),
+              fontSize: 11,
+              color: AppTheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),
@@ -519,26 +553,29 @@ class _RateChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(mainAxisSize: MainAxisSize.min, children: [
-      Container(
-        width: 6,
-        height: 6,
-        decoration: BoxDecoration(
-          color: isLive ? AppTheme.vaultGreen : AppTheme.onSurfaceVariant,
-          shape: BoxShape.circle,
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 6,
+          height: 6,
+          decoration: BoxDecoration(
+            color: isLive ? AppTheme.vaultGreen : AppTheme.onSurfaceVariant,
+            shape: BoxShape.circle,
+          ),
         ),
-      ),
-      const SizedBox(width: 4),
-      Text(
-        isLive ? 'LIVE' : 'CACHED',
-        style: GoogleFonts.plusJakartaSans(
-          fontSize: 9,
-          fontWeight: FontWeight.w800,
-          color: isLive ? AppTheme.vaultGreen : AppTheme.onSurfaceVariant,
-          letterSpacing: 1.2,
+        const SizedBox(width: 4),
+        Text(
+          isLive ? 'LIVE' : 'CACHED',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 9,
+            fontWeight: FontWeight.w800,
+            color: isLive ? AppTheme.vaultGreen : AppTheme.onSurfaceVariant,
+            letterSpacing: 1.2,
+          ),
         ),
-      ),
-    ]);
+      ],
+    );
   }
 }
 
@@ -562,15 +599,22 @@ class _Row extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Expanded(
-          child: Text(label,
-              style: GoogleFonts.plusJakartaSans(
-                  fontSize: sz, color: AppTheme.onSurfaceVariant)),
-        ),
-        Text(value,
+          child: Text(
+            label,
             style: GoogleFonts.plusJakartaSans(
-                fontSize: sz,
-                fontWeight: FontWeight.w600,
-                color: valueColor ?? AppTheme.onSurface)),
+              fontSize: sz,
+              color: AppTheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+        Text(
+          value,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: sz,
+            fontWeight: FontWeight.w600,
+            color: valueColor ?? AppTheme.onSurface,
+          ),
+        ),
       ],
     );
   }

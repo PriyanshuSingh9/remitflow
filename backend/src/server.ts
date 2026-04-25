@@ -37,7 +37,7 @@ class HttpError extends Error {
 function sendJson(response: ServerResponse, statusCode: number, body: JsonRecord) {
   response.writeHead(statusCode, {
     "Content-Type": "application/json; charset=utf-8",
-    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Origin": env.corsOrigin,
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS"
   });
@@ -234,7 +234,7 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse) 
     const html = renderWidgetHtml(orderId, amount, currency);
     response.writeHead(200, {
       "Content-Type": "text/html; charset=utf-8",
-      "Access-Control-Allow-Origin": "*"
+      "Access-Control-Allow-Origin": env.corsOrigin
     });
     response.end(html);
     return;
@@ -264,6 +264,11 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse) 
 
   // ─── Demo: Force Release (safety net for live demo) ────────────
   if (request.method === "POST" && url.pathname === "/demo/force-release") {
+    if (!env.enableDemoAdmin) {
+      throw new HttpError("Demo admin routes are disabled.", 404);
+    }
+    getCurrentSession(request);
+
     const body = (await readBody(request)) as { escrowId?: number; transactionId?: string };
 
     if (body.transactionId) {
@@ -307,10 +312,15 @@ async function routeRequest(request: IncomingMessage, response: ServerResponse) 
 
   // ─── Demo: Admin Panel HTML ────────────────────────────────────
   if (request.method === "GET" && url.pathname === "/demo/admin") {
+    if (!env.enableDemoAdmin) {
+      throw new HttpError("Demo admin routes are disabled.", 404);
+    }
+    getCurrentSession(request);
+
     const html = renderDemoAdminHtml();
     response.writeHead(200, {
       "Content-Type": "text/html; charset=utf-8",
-      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Origin": env.corsOrigin,
     });
     response.end(html);
     return;

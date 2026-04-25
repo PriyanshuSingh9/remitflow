@@ -42,6 +42,7 @@ ios/Flutter/Flutter.podspec
 *.key
 *.mnemonic
 wallet.json
+client_secret_*.json
 
 # =========================
 # SOLIDITY / WEB3 (Remix / Hardhat safe)

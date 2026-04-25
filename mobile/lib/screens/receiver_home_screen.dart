@@ -119,10 +119,13 @@ class _ReceiverHomeScreenState extends State<ReceiverHomeScreen>
                         builder: (context, child) {
                           return Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 5),
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
                             decoration: BoxDecoration(
-                              color: AppTheme.depositGradientStart
-                                  .withOpacity(0.15 + _pulseController.value * 0.1),
+                              color: AppTheme.depositGradientStart.withValues(
+                                alpha: 0.15 + _pulseController.value * 0.1,
+                              ),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Row(
@@ -133,8 +136,12 @@ class _ReceiverHomeScreenState extends State<ReceiverHomeScreen>
                                   height: 6,
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
-                                    color: AppTheme.depositGradientEnd.withOpacity(
-                                        0.6 + _pulseController.value * 0.4),
+                                    color: AppTheme.depositGradientEnd
+                                        .withValues(
+                                          alpha:
+                                              0.6 +
+                                              _pulseController.value * 0.4,
+                                        ),
                                   ),
                                 ),
                                 const SizedBox(width: 5),
@@ -177,7 +184,9 @@ class _ReceiverHomeScreenState extends State<ReceiverHomeScreen>
                   child: Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(
-                        vertical: 36, horizontal: 24),
+                      vertical: 36,
+                      horizontal: 24,
+                    ),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
                         begin: Alignment.topLeft,
@@ -191,7 +200,7 @@ class _ReceiverHomeScreenState extends State<ReceiverHomeScreen>
                       borderRadius: BorderRadius.circular(28),
                       boxShadow: [
                         BoxShadow(
-                          color: AppTheme.vaultGreen.withOpacity(0.25),
+                          color: AppTheme.vaultGreen.withValues(alpha: 0.25),
                           blurRadius: 30,
                           offset: const Offset(0, 12),
                         ),
@@ -204,7 +213,7 @@ class _ReceiverHomeScreenState extends State<ReceiverHomeScreen>
                           style: GoogleFonts.plusJakartaSans(
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
-                            color: Colors.white.withOpacity(0.6),
+                            color: Colors.white.withValues(alpha: 0.6),
                             letterSpacing: 1.5,
                           ),
                         ),
@@ -225,23 +234,27 @@ class _ReceiverHomeScreenState extends State<ReceiverHomeScreen>
                         const SizedBox(height: 12),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 5),
+                            horizontal: 12,
+                            vertical: 5,
+                          ),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.1),
+                            color: Colors.white.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Text('🇮🇳',
-                                  style: TextStyle(fontSize: 14)),
+                              const Text(
+                                '🇮🇳',
+                                style: TextStyle(fontSize: 14),
+                              ),
                               const SizedBox(width: 6),
                               Text(
                                 'Indian Rupees',
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w500,
-                                  color: Colors.white.withOpacity(0.7),
+                                  color: Colors.white.withValues(alpha: 0.7),
                                 ),
                               ),
                             ],
@@ -292,8 +305,9 @@ class _ReceiverHomeScreenState extends State<ReceiverHomeScreen>
                               Icon(
                                 Icons.inbox_rounded,
                                 size: 48,
-                                color:
-                                    AppTheme.onSurfaceVariant.withOpacity(0.3),
+                                color: AppTheme.onSurfaceVariant.withValues(
+                                  alpha: 0.3,
+                                ),
                               ),
                               const SizedBox(height: 12),
                               Text(
@@ -309,8 +323,9 @@ class _ReceiverHomeScreenState extends State<ReceiverHomeScreen>
                                 'Received payments will appear here in real time',
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 13,
-                                  color: AppTheme.onSurfaceVariant
-                                      .withOpacity(0.7),
+                                  color: AppTheme.onSurfaceVariant.withValues(
+                                    alpha: 0.7,
+                                  ),
                                 ),
                               ),
                             ],
@@ -319,7 +334,7 @@ class _ReceiverHomeScreenState extends State<ReceiverHomeScreen>
                       : ListView.separated(
                           padding: const EdgeInsets.fromLTRB(24, 4, 24, 24),
                           itemCount: transactions.length,
-                          separatorBuilder: (_, __) =>
+                          separatorBuilder: (context, index) =>
                               const SizedBox(height: 8),
                           itemBuilder: (context, index) {
                             return _TransactionTile(
@@ -339,10 +354,7 @@ class _ReceiverHomeScreenState extends State<ReceiverHomeScreen>
 }
 
 class _TransactionTile extends StatelessWidget {
-  const _TransactionTile({
-    required this.transaction,
-    required this.inrFormat,
-  });
+  const _TransactionTile({required this.transaction, required this.inrFormat});
 
   final TransactionSummary transaction;
   final NumberFormat inrFormat;
@@ -350,7 +362,9 @@ class _TransactionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final sender = transaction.counterparty;
-    final dateStr = DateFormat('dd MMM, hh:mm a').format(transaction.createdAt.toLocal());
+    final dateStr = DateFormat(
+      'dd MMM, hh:mm a',
+    ).format(transaction.createdAt.toLocal());
     final isCompleted = transaction.status == 'completed';
 
     return Container(

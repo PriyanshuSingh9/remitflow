@@ -2,7 +2,7 @@
 
 **Send money home. Fast. Fair. Borderless.**
 
-RemitFlow is a decentralized remittance application built for HackCraft 3.0, enabling seamless USD to INR transfers using **USDC** on the **Polygon Amoy Testnet**. By leveraging account abstraction and automated on/off-ramp integrations, RemitFlow removes the complexity of crypto for everyday users.
+RemitFlow is a decentralized remittance application built for Hack&Chill 3.0, enabling seamless USD to INR transfers using **USDC** on the **Polygon Amoy Testnet**. By leveraging account abstraction and automated on/off-ramp integrations, RemitFlow removes the complexity of crypto for everyday users.
 
 ---
 
@@ -35,10 +35,10 @@ RemitFlow is a decentralized remittance application built for HackCraft 3.0, ena
 ## 🔄 Transfer Flow
 
 1. **Initiate**: User A enters the amount ($) and receiver details.
-2. **On-Ramp**: User A purchases **USDC** via Transak inside the app.
-3. **Escrow**: User A deposits USDC into the RemitFlow smart contract escrow.
+2. **On-Ramp**: We then purchase **USDC** via Transak inside the app.
+3. **Escrow**: Then deposits USDC into the RemitFlow smart contract escrow.
 4. **Validation**: Express backend listens for deposit events and requests off-ramp. 
-5. **Credit & Release**: OnMeta converts the USDC to INR. The backend releases the escrow to OnMeta when ready. INR is credited to User B's bank or UPI.
+5. **Credit & Release**: OnMeta converts the USDC to INR. The backend releases the escrow to OnMeta when ready. INR is credited to User B's bank.
 
 ---
 
@@ -95,5 +95,5 @@ For full product requirements, screen lists, and database schema, refer to the [
 
 ---
 
-## 🏆 HackCraft 3.0 Hackathon Project
+## 🏆 Hack&Chill 3.0 Hackathon Project
 Built with ❤️ on Polygon.

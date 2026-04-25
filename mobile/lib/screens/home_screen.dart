@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
+import '../models/app_models.dart';
+import 'receipt_screen.dart';
 import 'transfer_screen.dart';
 import 'settings_screen.dart';
 import '../services/auth_service.dart';
@@ -69,8 +71,10 @@ class _GrainOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Positioned.fill(
-      child: IgnorePointer(child: CustomPaint(painter: _GrainPainter())),
+    return RepaintBoundary(
+      child: Positioned.fill(
+        child: IgnorePointer(child: CustomPaint(painter: _GrainPainter())),
+      ),
     );
   }
 }
@@ -151,6 +155,8 @@ class _GreetingSection extends StatelessWidget {
               width: 32,
               height: 32,
               fit: BoxFit.cover,
+              cacheWidth: 64,
+              cacheHeight: 64,
               errorBuilder: (context, error, stackTrace) =>
                   _initialsAvatar(initials),
             )
@@ -624,6 +630,7 @@ class _RecentTransactions extends StatelessWidget {
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 20),
                     child: _TransactionItem(
+                      transaction: tx,
                       icon: isSent
                           ? Icons.arrow_upward_rounded
                           : Icons.arrow_downward_rounded,
@@ -652,6 +659,7 @@ class _RecentTransactions extends StatelessWidget {
 }
 
 class _TransactionItem extends StatelessWidget {
+  final TransactionSummary transaction;
   final IconData icon;
   final List<Color> gradientColors;
   final String title;
@@ -660,6 +668,7 @@ class _TransactionItem extends StatelessWidget {
   final Color amountColor;
 
   const _TransactionItem({
+    required this.transaction,
     required this.icon,
     required this.gradientColors,
     required this.title,
@@ -670,67 +679,83 @@ class _TransactionItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        // Gradient circle icon
-        Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: gradientColors,
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ReceiptScreen(
+              receipt: TransferReceipt(
+                transaction: transaction,
+                senderBalanceAfter: 0,
+              ),
             ),
-            boxShadow: [
-              BoxShadow(
-                color: gradientColors[0].withValues(alpha: 0.2),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
           ),
-          child: Icon(icon, color: Colors.white, size: 22),
-        ),
-
-        const SizedBox(width: 16),
-
-        // Title + Subtitle
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: GoogleFonts.newsreader(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w500,
-                  color: AppTheme.onSurface,
+        );
+      },
+      child: Row(
+        children: [
+          // Gradient circle icon
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: gradientColors,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: gradientColors[0].withValues(alpha: 0.2),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
                 ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 12,
-                  color: AppTheme.onSurfaceVariant,
-                ),
-              ),
-            ],
+              ],
+            ),
+            child: Icon(icon, color: Colors.white, size: 22),
           ),
-        ),
 
-        // Amount (USD only)
-        Text(
-          amount,
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-            color: amountColor,
+          const SizedBox(width: 16),
+
+          // Title + Subtitle
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.newsreader(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w500,
+                    color: AppTheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    color: AppTheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+
+          // Amount (USD only)
+          Text(
+            amount,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: amountColor,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

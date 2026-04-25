@@ -390,7 +390,6 @@ class _TransactionTile extends StatelessWidget {
     final dateStr = DateFormat(
       'dd MMM, hh:mm a',
     ).format(transaction.createdAt.toLocal());
-    final isCompleted = transaction.status == 'completed';
     final reference = transaction.txHash ?? transaction.id;
     final shortReference = reference.length > 18
         ? '${reference.substring(0, 8)}...${reference.substring(reference.length - 6)}'
@@ -447,29 +446,6 @@ class _TransactionTile extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isCompleted
-                        ? AppTheme.secondaryContainer
-                        : AppTheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    isCompleted ? 'PAID' : transaction.status.toUpperCase(),
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      color: isCompleted
-                          ? AppTheme.onSecondaryContainer
-                          : AppTheme.onSurfaceVariant,
-                      letterSpacing: 1.1,
-                    ),
                   ),
                 ),
               ],

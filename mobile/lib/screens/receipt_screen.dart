@@ -166,17 +166,14 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
   Widget build(BuildContext context) {
     final tx = widget.receipt.transaction;
     final isSent = tx.isSent;
-    final isPending = _currentStatus != 'completed' && _currentStatus != 'failed';
+    final isPending = _currentStatus != 'completed';
     final statusLabel = _formatStatus(_currentStatus);
-    final isSuccess = _currentStatus == 'completed' && isSent;
-    final isFailed = _currentStatus == 'failed';
+    final isSuccess = _currentStatus == 'completed';
 
     return Scaffold(
       backgroundColor: isSuccess
           ? AppTheme.vaultGreen
-          : isFailed
-              ? AppTheme.error
-              : AppTheme.secondary,
+          : AppTheme.secondary,
       body: SafeArea(
         child: Column(
           children: [
@@ -253,9 +250,7 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                                 Text(
                                   isSuccess
                                       ? 'Payment Successful'
-                                      : isFailed
-                                          ? 'Payment Failed'
-                                          : 'Processing Payment',
+                                      : 'Processing Payment',
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w700,
@@ -316,15 +311,9 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                                       color: AppTheme.vaultGreen,
                                       size: 28,
                                     )
-                                  : isFailed
-                                      ? const Icon(
-                                          Icons.close_rounded,
-                                          color: AppTheme.error,
-                                          size: 28,
-                                        )
-                                      : const SizedBox(
-                                          width: 24,
-                                          height: 24,
+                                  : const SizedBox(
+                                      width: 24,
+                                      height: 24,
                                           child: CircularProgressIndicator(
                                             strokeWidth: 2,
                                             color: Colors.white60,

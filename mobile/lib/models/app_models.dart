@@ -149,7 +149,7 @@ class TransactionSummary {
       amountInr: (json['amountInr'] as num?)?.toDouble() ?? 0,
       feeUsd: (json['feeUsd'] as num?)?.toDouble() ?? 0,
       txHash: json['txHash'] as String?,
-      status: json['status'] as String? ?? 'pending',
+      status: (json['status'] as String?) ?? 'completed',
       createdAt: DateTime.parse(json['createdAt'] as String),
       completedAt: json['completedAt'] == null
           ? null

@@ -60,4 +60,15 @@ class AppRepository {
 
     return TransferReceipt.fromJson(response);
   }
+
+  Future<Map<String, dynamic>> getTransferStatus({
+    required String sessionToken,
+    required String transactionId,
+  }) async {
+    final response = await _apiClient.getJson(
+      '/transfers/$transactionId',
+      sessionToken: sessionToken,
+    );
+    return response;
+  }
 }

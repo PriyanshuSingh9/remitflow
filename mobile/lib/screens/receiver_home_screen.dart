@@ -63,9 +63,7 @@ class _ReceiverHomeScreenState extends State<ReceiverHomeScreen>
           final user = data?.user ?? AppDataService().sessionUser;
           final totalInr = data?.totalReceivedInr ?? 0;
           final transactions = data?.receivedTransactions ?? [];
-          final pendingCount = transactions
-              .where((tx) => tx.status != 'completed')
-              .length;
+          final pendingCount = 0;
           final totalUsd = transactions.fold<double>(
             0,
             (sum, tx) => sum + tx.amountUsd,

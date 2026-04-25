@@ -77,7 +77,7 @@ async function processOffRampPipeline(
       where: { externalOrderId },
       data: { status: "PENDING_LIQUIDITY" },
     });
-    await delay(env.mockRampDelayMs);
+    await delay(env.mockRampDelayMs / 2);
 
     // Step 2 — Ready for funding
     console.log(`[offramp] ${externalOrderId}: confirming ready_for_funding...`);

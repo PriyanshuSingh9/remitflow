@@ -42,5 +42,5 @@ export const env = {
   usdcAddress: read("USDC_ADDRESS") ?? "",
 
   // ─── Mock Ramps ──────────────────────────────────────────────────
-  mockRampDelayMs: Number(read("MOCK_RAMP_DELAY_MS") ?? "3000"),
+  mockRampDelayMs: Number(read("MOCK_RAMP_DELAY_MS") ?? "1500"),
 };

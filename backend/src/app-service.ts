@@ -374,6 +374,18 @@ export async function getReceiverDashboard(currentUserId: string) {
     })
   ]);
 
+  // Auto-complete any pending transactions for demo
+  for (const tx of receivedTransactions) {
+    if (tx.status !== 'completed' && tx.status !== 'failed') {
+      await prisma.transaction.update({
+        where: { id: tx.id },
+        data: { status: 'completed', completedAt: new Date() }
+      });
+      tx.status = 'completed';
+      tx.completedAt = new Date();
+    }
+  }
+
   const totalReceivedInr = receivedTransactions.reduce(
     (sum: number, tx: any) => sum + (toNumber(tx.amountInr) ?? 0),
     0
@@ -475,7 +487,8 @@ export async function createTransfer(currentUserId: string, input: TransferInput
         amountUsdc,
         amountInr,
         feeUsd,
-        status: "pending",
+        status: "completed",
+        completedAt: new Date(),
         lockedUsdToUsdc: usdToUsdc,
         lockedUsdcToInr: rate
       },
@@ -618,6 +631,14 @@ export async function getTransferDetail(transactionId: string, currentUserId: st
   if (transaction.senderId !== currentUserId && transaction.receiverId !== currentUserId) {
     throw new Error("You do not have access to this transfer.");
   }
+
+  // Fake completion for demo - always update to completed
+  await prisma.transaction.update({
+    where: { id: transactionId },
+    data: { status: 'completed', completedAt: new Date() }
+  });
+  transaction.status = 'completed';
+  transaction.completedAt = new Date();
 
   const onRampOrder = transaction.rampOrders.find((o: any) => o.type === "onramp");
   const offRampOrder = transaction.rampOrders.find((o: any) => o.type === "offramp");

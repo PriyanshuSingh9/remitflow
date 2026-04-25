@@ -175,6 +175,21 @@ class AppDataService extends ChangeNotifier {
     }
   }
 
+  Future<Map<String, dynamic>?> getTransferStatus(String transactionId) async {
+    if (!AuthService().isAuthenticated) {
+      return null;
+    }
+    try {
+      final sessionToken = _requireSessionToken();
+      return await _repository.getTransferStatus(
+        sessionToken: sessionToken,
+        transactionId: transactionId,
+      );
+    } catch (error) {
+      return null;
+    }
+  }
+
   void clear() {
     if (_sessionUser == null && _dashboard == null && _recipients.isEmpty) {
       _bootstrapErrorMessage = null;

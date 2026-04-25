@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -20,6 +21,9 @@ class ReceiptScreen extends StatefulWidget {
 
 class _ReceiptScreenState extends State<ReceiptScreen> {
   double _exchangeRate = 83.42;
+  Timer? _statusPoller;
+  String _currentStatus = '';
+  int _pollAttempts = 0;
 
   static final _dateFmt = DateFormat("MMMM d, yyyy 'at' h:mm a");
   static final _inrFmt = NumberFormat('#,##,##0.00');
@@ -39,6 +43,48 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
     super.initState();
     _computeOnce();
     _fetchExchangeRate();
+    _currentStatus = widget.receipt.transaction.status;
+    if (_currentStatus != 'completed' && _currentStatus != 'failed') {
+      _startStatusPolling();
+    }
+  }
+
+  @override
+  void dispose() {
+    _statusPoller?.cancel();
+    super.dispose();
+  }
+
+  void _startStatusPolling() {
+    _statusPoller = Timer.periodic(const Duration(seconds: 2), (_) async {
+      if (_pollAttempts >= 20) {
+        _statusPoller?.cancel();
+        return;
+      }
+      _pollAttempts++;
+      await _pollTransactionStatus();
+    });
+  }
+
+  Future<void> _pollTransactionStatus() async {
+    try {
+      final appData = AppDataService();
+      final tx = widget.receipt.transaction;
+      if (tx.id.isEmpty) return;
+      final detail = await appData.getTransferStatus(tx.id);
+      if (mounted && detail != null) {
+        final txDetail = detail['transaction'] as Map<String, dynamic>?;
+        final newStatus = (txDetail?['status'] as String?) ?? _currentStatus;
+        if (newStatus != _currentStatus) {
+          setState(() {
+            _currentStatus = newStatus;
+          });
+          if (newStatus == 'completed' || newStatus == 'failed') {
+            _statusPoller?.cancel();
+          }
+        }
+      }
+    } catch (_) {}
   }
 
   void _computeOnce() {
@@ -93,13 +139,44 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
     Share.share(shareText, subject: 'RemitFlow Transaction Receipt');
   }
 
+  String _formatStatus(String status) {
+    switch (status) {
+      case 'pending':
+        return 'PENDING';
+      case 'escrow_locked':
+        return 'PROCESSING';
+      case 'offramp_pending':
+        return 'SETTLING';
+      case 'offramp_ready':
+        return 'ALMOST DONE';
+      case 'escrow_released':
+        return 'RELEASING';
+      case 'completed':
+        return 'COMPLETED';
+      case 'failed':
+        return 'FAILED';
+      case 'refunded':
+        return 'REFUNDED';
+      default:
+        return status.toUpperCase();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final tx = widget.receipt.transaction;
     final isSent = tx.isSent;
+    final isPending = _currentStatus != 'completed' && _currentStatus != 'failed';
+    final statusLabel = _formatStatus(_currentStatus);
+    final isSuccess = _currentStatus == 'completed' && isSent;
+    final isFailed = _currentStatus == 'failed';
 
     return Scaffold(
-      backgroundColor: AppTheme.vaultGreen,
+      backgroundColor: isSuccess
+          ? AppTheme.vaultGreen
+          : isFailed
+              ? AppTheme.error
+              : AppTheme.secondary,
       body: SafeArea(
         child: Column(
           children: [
@@ -113,6 +190,41 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                     onPressed: () =>
                         Navigator.of(context).popUntil((r) => r.isFirst),
                   ),
+                  const Spacer(),
+                  if (isPending)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white24,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const SizedBox(
+                            width: 10,
+                            height: 10,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 1.5,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            statusLabel,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -139,9 +251,11 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  isSent
+                                  isSuccess
                                       ? 'Payment Successful'
-                                      : 'Payment Received',
+                                      : isFailed
+                                          ? 'Payment Failed'
+                                          : 'Processing Payment',
                                   style: GoogleFonts.plusJakartaSans(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w700,
@@ -195,12 +309,27 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                                 ),
                               ],
                             ),
-                            child: const Center(
-                              child: Icon(
-                                Icons.check_rounded,
-                                color: AppTheme.vaultGreen,
-                                size: 28,
-                              ),
+                            child: Center(
+                              child: isSuccess
+                                  ? const Icon(
+                                      Icons.check_rounded,
+                                      color: AppTheme.vaultGreen,
+                                      size: 28,
+                                    )
+                                  : isFailed
+                                      ? const Icon(
+                                          Icons.close_rounded,
+                                          color: AppTheme.error,
+                                          size: 28,
+                                        )
+                                      : const SizedBox(
+                                          width: 24,
+                                          height: 24,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white60,
+                                          ),
+                                        ),
                             ),
                           ),
                         ],

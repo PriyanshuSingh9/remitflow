@@ -647,6 +647,7 @@ class _RecentTransactions extends StatelessWidget {
                       amountColor: isSent
                           ? AppTheme.onSurface
                           : AppTheme.vaultGreen,
+                      status: tx.status,
                     ),
                   );
                 }),
@@ -666,6 +667,7 @@ class _TransactionItem extends StatelessWidget {
   final String subtitle;
   final String amount;
   final Color amountColor;
+  final String status;
 
   const _TransactionItem({
     required this.transaction,
@@ -675,10 +677,15 @@ class _TransactionItem extends StatelessWidget {
     required this.subtitle,
     required this.amount,
     required this.amountColor,
+    required this.status,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isPending = status != 'completed' && status != 'escrow_released';
+    final statusColor = isPending ? AppTheme.secondary : AppTheme.onSurfaceVariant;
+    final statusLabel = isPending ? _formatStatus(status) : '';
+    
     return InkWell(
       borderRadius: BorderRadius.circular(18),
       onTap: () {
@@ -715,7 +722,23 @@ class _TransactionItem extends StatelessWidget {
                 ),
               ],
             ),
-            child: Icon(icon, color: Colors.white, size: 22),
+            child: isPending
+                ? Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Icon(icon, color: Colors.white, size: 22),
+                      if (status == 'pending')
+                        const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 1.5,
+                            color: Colors.white70,
+                          ),
+                        ),
+                    ],
+                  )
+                : Icon(icon, color: Colors.white, size: 22),
           ),
 
           const SizedBox(width: 16),
@@ -741,6 +764,18 @@ class _TransactionItem extends StatelessWidget {
                     color: AppTheme.onSurfaceVariant,
                   ),
                 ),
+                if (isPending) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    statusLabel,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: statusColor,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -757,6 +792,29 @@ class _TransactionItem extends StatelessWidget {
         ],
       ),
     );
+  }
+  
+  String _formatStatus(String status) {
+    switch (status) {
+      case 'pending':
+        return 'PENDING';
+      case 'escrow_locked':
+        return 'PROCESSING';
+      case 'offramp_pending':
+        return 'SETTLING';
+      case 'offramp_ready':
+        return 'ALMOST DONE';
+      case 'escrow_released':
+        return 'RELEASING';
+      case 'completed':
+        return 'COMPLETED';
+      case 'failed':
+        return 'FAILED';
+      case 'refunded':
+        return 'REFUNDED';
+      default:
+        return status.toUpperCase();
+    }
   }
 }
 

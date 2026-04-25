@@ -38,7 +38,8 @@ class SessionUser {
       phoneNumber: json['phoneNumber'] as String?,
       walletAddress: json['walletAddress'] as String,
       country: json['country'] as String? ?? 'US',
-      availableBalanceUsd: (json['availableBalanceUsd'] as num?)?.toDouble() ?? 0,
+      availableBalanceUsd:
+          (json['availableBalanceUsd'] as num?)?.toDouble() ?? 0,
       lifetimeSavingsUsd: (json['lifetimeSavingsUsd'] as num?)?.toDouble() ?? 0,
     );
   }
@@ -140,7 +141,9 @@ class TransactionSummary {
     return TransactionSummary(
       id: json['id'] as String,
       direction: json['direction'] as String,
-      counterparty: RecipientSummary.fromJson(json['counterparty'] as Map<String, dynamic>),
+      counterparty: RecipientSummary.fromJson(
+        json['counterparty'] as Map<String, dynamic>,
+      ),
       amountUsd: (json['amountUsd'] as num?)?.toDouble() ?? 0,
       amountUsdc: (json['amountUsdc'] as num?)?.toDouble() ?? 0,
       amountInr: (json['amountInr'] as num?)?.toDouble() ?? 0,
@@ -169,10 +172,16 @@ class DashboardData {
   factory DashboardData.fromJson(Map<String, dynamic> json) {
     return DashboardData(
       user: SessionUser.fromJson(json['user'] as Map<String, dynamic>),
-      exchangeRate: ExchangeRateData.fromJson(json['exchangeRate'] as Map<String, dynamic>),
-      recentTransactions: (json['recentTransactions'] as List<dynamic>? ?? const [])
-          .map((item) => TransactionSummary.fromJson(item as Map<String, dynamic>))
-          .toList(growable: false),
+      exchangeRate: ExchangeRateData.fromJson(
+        json['exchangeRate'] as Map<String, dynamic>,
+      ),
+      recentTransactions:
+          (json['recentTransactions'] as List<dynamic>? ?? const [])
+              .map(
+                (item) =>
+                    TransactionSummary.fromJson(item as Map<String, dynamic>),
+              )
+              .toList(growable: false),
     );
   }
 }
@@ -188,7 +197,9 @@ class TransferReceipt {
 
   factory TransferReceipt.fromJson(Map<String, dynamic> json) {
     return TransferReceipt(
-      transaction: TransactionSummary.fromJson(json['transaction'] as Map<String, dynamic>),
+      transaction: TransactionSummary.fromJson(
+        json['transaction'] as Map<String, dynamic>,
+      ),
       senderBalanceAfter: (json['senderBalanceAfter'] as num?)?.toDouble() ?? 0,
     );
   }
@@ -209,9 +220,13 @@ class ReceiverDashboardData {
     return ReceiverDashboardData(
       user: SessionUser.fromJson(json['user'] as Map<String, dynamic>),
       totalReceivedInr: (json['totalReceivedInr'] as num?)?.toDouble() ?? 0,
-      receivedTransactions: (json['receivedTransactions'] as List<dynamic>? ?? const [])
-          .map((item) => TransactionSummary.fromJson(item as Map<String, dynamic>))
-          .toList(growable: false),
+      receivedTransactions:
+          (json['receivedTransactions'] as List<dynamic>? ?? const [])
+              .map(
+                (item) =>
+                    TransactionSummary.fromJson(item as Map<String, dynamic>),
+              )
+              .toList(growable: false),
     );
   }
 }

@@ -58,7 +58,9 @@ class AppDataService extends ChangeNotifier {
 
     try {
       final sessionToken = _requireSessionToken();
-      _sessionUser = await _repository.fetchCurrentUser(sessionToken: sessionToken);
+      _sessionUser = await _repository.fetchCurrentUser(
+        sessionToken: sessionToken,
+      );
       _dashboard = await _repository.fetchDashboard(sessionToken: sessionToken);
       _sessionUser = _dashboard!.user;
     } catch (error) {
@@ -100,7 +102,9 @@ class AppDataService extends ChangeNotifier {
 
     try {
       final sessionToken = _requireSessionToken();
-      _receiverDashboard = await _repository.fetchReceiverDashboard(sessionToken: sessionToken);
+      _receiverDashboard = await _repository.fetchReceiverDashboard(
+        sessionToken: sessionToken,
+      );
       _sessionUser = _receiverDashboard!.user;
       notifyListeners();
     } catch (error) {

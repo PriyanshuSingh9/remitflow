@@ -8,6 +8,7 @@ import '../models/app_models.dart';
 import '../services/app_data_service.dart';
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
+import 'receipt_screen.dart';
 
 class ReceiverHomeScreen extends StatefulWidget {
   const ReceiverHomeScreen({super.key});
@@ -62,6 +63,13 @@ class _ReceiverHomeScreenState extends State<ReceiverHomeScreen>
           final user = data?.user ?? AppDataService().sessionUser;
           final totalInr = data?.totalReceivedInr ?? 0;
           final transactions = data?.receivedTransactions ?? [];
+          final pendingCount = transactions
+              .where((tx) => tx.status != 'completed')
+              .length;
+          final totalUsd = transactions.fold<double>(
+            0,
+            (sum, tx) => sum + tx.amountUsd,
+          );
 
           return SafeArea(
             child: Column(
@@ -260,6 +268,25 @@ class _ReceiverHomeScreenState extends State<ReceiverHomeScreen>
                             ],
                           ),
                         ),
+                        const SizedBox(height: 18),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _HeroMetric(
+                                label: 'USD volume',
+                                value:
+                                    '\$${NumberFormat('#,##0.00').format(totalUsd)}',
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: _HeroMetric(
+                                label: 'Pending rails',
+                                value: pendingCount.toString(),
+                              ),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
@@ -366,102 +393,255 @@ class _TransactionTile extends StatelessWidget {
       'dd MMM, hh:mm a',
     ).format(transaction.createdAt.toLocal());
     final isCompleted = transaction.status == 'completed';
+    final reference = transaction.txHash ?? transaction.id;
+    final shortReference = reference.length > 18
+        ? '${reference.substring(0, 8)}...${reference.substring(reference.length - 6)}'
+        : reference;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          // Sender Avatar
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  AppTheme.depositGradientStart,
-                  AppTheme.depositGradientEnd,
-                ],
-              ),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Center(
-              child: Text(
-                (sender.preferredName)[0].toUpperCase(),
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ReceiptScreen(
+              receipt: TransferReceipt(
+                transaction: transaction,
+                senderBalanceAfter: 0,
               ),
             ),
           ),
-          const SizedBox(width: 14),
-          // Details
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(22),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '+ ${inrFormat.format(transaction.amountInr)}',
+                        style: GoogleFonts.newsreader(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.vaultGreen,
+                          letterSpacing: -0.6,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'From ${sender.preferredName}',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.onSurface,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isCompleted
+                        ? AppTheme.secondaryContainer
+                        : AppTheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    isCompleted ? 'PAID' : transaction.status.toUpperCase(),
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: isCompleted
+                          ? AppTheme.onSecondaryContainer
+                          : AppTheme.onSurfaceVariant,
+                      letterSpacing: 1.1,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            _DashedDivider(
+              color: AppTheme.outlineVariant.withValues(alpha: 0.55),
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                _ReceiptInfo(
+                  label: 'Received',
+                  value: dateStr,
+                  icon: Icons.schedule_rounded,
+                ),
+                const SizedBox(width: 14),
+                _ReceiptInfo(
+                  label: 'Ref',
+                  value: shortReference,
+                  icon: Icons.tag_rounded,
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Icon(
+                  Icons.receipt_long_rounded,
+                  size: 15,
+                  color: AppTheme.onSurfaceVariant.withValues(alpha: 0.75),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'Tap for full receipt',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.onSurfaceVariant,
+                  ),
+                ),
+                const Spacer(),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  size: 18,
+                  color: AppTheme.onSurfaceVariant,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ReceiptInfo extends StatelessWidget {
+  const _ReceiptInfo({
+    required this.label,
+    required this.value,
+    required this.icon,
+  });
+
+  final String label;
+  final String value;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            size: 15,
+            color: AppTheme.onSurfaceVariant.withValues(alpha: 0.75),
+          ),
+          const SizedBox(width: 6),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'From ${sender.preferredName}',
+                  label.toUpperCase(),
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.onSurfaceVariant,
+                    letterSpacing: 1.1,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
                     color: AppTheme.onSurface,
                   ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 3),
-                Row(
-                  children: [
-                    Icon(
-                      isCompleted
-                          ? Icons.check_circle_rounded
-                          : Icons.schedule_rounded,
-                      size: 12,
-                      color: isCompleted
-                          ? AppTheme.depositGradientEnd
-                          : AppTheme.onSurfaceVariant,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      isCompleted ? 'Completed' : transaction.status,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                        color: isCompleted
-                            ? AppTheme.depositGradientEnd
-                            : AppTheme.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        dateStr,
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 11,
-                          color: AppTheme.onSurfaceVariant,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
                 ),
               ],
             ),
           ),
-          // Amount
+        ],
+      ),
+    );
+  }
+}
+
+class _DashedDivider extends StatelessWidget {
+  const _DashedDivider({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const dashWidth = 6.0;
+        const gap = 5.0;
+        final count = (constraints.maxWidth / (dashWidth + gap)).floor();
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: List.generate(
+            count,
+            (index) => SizedBox(
+              width: dashWidth,
+              height: 1,
+              child: DecoratedBox(decoration: BoxDecoration(color: color)),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _HeroMetric extends StatelessWidget {
+  const _HeroMetric({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
           Text(
-            '+ ${inrFormat.format(transaction.amountInr)}',
-            style: GoogleFonts.newsreader(
-              fontSize: 17,
-              fontWeight: FontWeight.w600,
-              color: AppTheme.vaultGreen,
+            value,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            label.toUpperCase(),
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 9,
+              fontWeight: FontWeight.w700,
+              color: Colors.white.withValues(alpha: 0.62),
+              letterSpacing: 1.1,
             ),
           ),
         ],

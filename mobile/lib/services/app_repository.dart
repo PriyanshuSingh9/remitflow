@@ -7,17 +7,28 @@ class AppRepository {
   final ApiClient _apiClient;
 
   Future<SessionUser> fetchCurrentUser({required String sessionToken}) async {
-    final response = await _apiClient.getJson('/auth/me', sessionToken: sessionToken);
+    final response = await _apiClient.getJson(
+      '/auth/me',
+      sessionToken: sessionToken,
+    );
     return SessionUser.fromJson(response['user'] as Map<String, dynamic>);
   }
 
   Future<DashboardData> fetchDashboard({required String sessionToken}) async {
-    final response = await _apiClient.getJson('/me/dashboard', sessionToken: sessionToken);
+    final response = await _apiClient.getJson(
+      '/me/dashboard',
+      sessionToken: sessionToken,
+    );
     return DashboardData.fromJson(response);
   }
 
-  Future<ReceiverDashboardData> fetchReceiverDashboard({required String sessionToken}) async {
-    final response = await _apiClient.getJson('/me/receiver-dashboard', sessionToken: sessionToken);
+  Future<ReceiverDashboardData> fetchReceiverDashboard({
+    required String sessionToken,
+  }) async {
+    final response = await _apiClient.getJson(
+      '/me/receiver-dashboard',
+      sessionToken: sessionToken,
+    );
     return ReceiverDashboardData.fromJson(response);
   }
 
@@ -44,10 +55,7 @@ class AppRepository {
     final response = await _apiClient.postJson(
       '/transfers',
       sessionToken: sessionToken,
-      body: {
-        'recipientId': recipientId,
-        'amountUsd': amountUsd,
-      },
+      body: {'recipientId': recipientId, 'amountUsd': amountUsd},
     );
 
     return TransferReceipt.fromJson(response);
